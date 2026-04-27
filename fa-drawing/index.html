@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Automaton Visualizer</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* 1. Global & Body Layout */
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background: #f4f4f9;
+        }
+
+        #main-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #222;
+        }
+
+        /* 2. Top Controls Bar */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .control-group { display: flex; flex-direction: column; }
+        label { font-weight: bold; margin-bottom: 5px; font-size: 0.85em; white-space: nowrap; }
+        select, input { padding: 6px; border: 1px solid #ccc; border-radius: 4px; height: 32px; box-sizing: border-box; }
+
+        /* Control Width Logic */
+        .grow-large { flex: 1.3; min-width: 150px; }
+        .grow-medium { flex: 1; min-width: 130px; }
+        .shrink-fixed { flex: 0 0 70px; }
+        #limit { width: 60px; text-align: center; }
+
+        /* 3. Main Container (The 2:1 Split) */
+        #canvas-container {
+            display: flex;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 600px; /* Locked height for both sides */
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        /* Graph Section - 2/3 Width */
+        #graph-wrapper {
+            flex: 2 1 0;
+            min-width: 0;
+            height: 100%;
+            border-right: 1px solid #ddd;
+            background: #fff;
+            position: relative; /* Context for the SVG */
+            overflow: hidden;    /* Hard boundary for the graph */
+        }
+
+        #automaton-svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            pointer-events: all; /* Ensures zoom still works */
+        }
+
+        /* Symbol Sidebar - 1/3 Width */
+        #symbol-sidebar {
+            flex: 1 1 0; /* Grow 1, Shrink 1, Basis 0 */
+            min-width: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #fdfdfd;
+        }
+
+        /* 4. Sidebar Internal Elements */
+        .sidebar-header {
+            padding: 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+
+        #symbol-search {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .table-scroll {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        #symbol-table-ui {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        #symbol-table-ui th {
+            position: sticky;
+            top: 0;
+            background: #eee;
+            z-index: 2;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid #ddd;
+        }
+
+        #symbol-table-ui td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* 5. Bottom Action Bar */
+        .action-bar {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        button.action {
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        button.action:hover { background: #218838; }
+        button#btn-generate { background: #007bff; }
+        button#btn-generate:hover { background: #0069d9; }
+        button#btn-export { background: #6c757d; }
+        button#btn-export:hover { background: #5a6268; }
+    </style>
+</head>
+<body>
+
+<h1 id="main-title">Pattern &lt;PATTERN&gt;</h1>
+
+<div class="controls">
+    <div class="control-group grow-large">
+        <label>Pattern</label>
+        <input type="text" id="pattern" placeholder="Pattern..." oninput="updateTitle()">
+    </div>
+    <div class="control-group grow-large">
+        <label>Symbol Table Path</label>
+        <input type="text" id="symTablePath" placeholder="Symbol Table Path..." oninput="updateTitle()">
+    </div>
+    <div class="control-group">
+        <label>Automaton Type</label>
+        <select id="autoType">
+            <option value="full">Full</option>
+            <option value="start">Start Pattern</option>
+            <option value="middle">Middle Pattern</option>
+            <option value="end">End Pattern</option>
+        </select>
+    </div>
+    <div class="control-group grow-medium">
+        <label>Highlight Connections Between Automata</label>
+        <select id="highlight" class="auto-render">
+            <option value="false">No</option>
+            <option value="true">Yes (Red)</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label>Show Legend</label>
+        <select id="ignoreLegend" class="auto-render">
+            <option value="true">No</option>
+            <option value="false">Yes</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label>Show Levels</label>
+        <select id="ignoreLevels" class="level">
+            <option value="false">Yes</option>
+            <option value="true">No</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label>Show Error</label>
+        <select id="showError" class="auto-render">
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+        </select>
+    </div>
+    <div class="control-group shrink-fixed">
+        <label>Limit</label>
+        <input type="number" id="limit" class="auto-render" value="3" min="1" max="256">
+    </div>
+</div>
+
+<div id="canvas-container">
+    <!-- No inline styles here, let the CSS handle it -->
+    <div id="graph-wrapper">
+        <div id="levels-legend-container" style="position: absolute; top: 10px; left: 10px; z-index: 5; background: white;">
+            <table id="levels-table" style="border-collapse: collapse; border: 1px solid black; font-family: serif; font-size: 14px;">
+                <tr id="levels-row-names"></tr>
+                <tr id="levels-row-values"></tr>
+            </table>
+        </div>
+
+        <div id="default-legend-container" style="position: absolute; bottom: 10px; left: 10px; z-index: 5; background: white;">
+            <table id="default-legend-table" style="border-collapse: collapse; border: 1px solid black; font-family: serif; font-size: 13px;">
+                <thead>
+                <tr>
+                    <th colspan="2" style="border: 1px solid black; padding: 5px; background: #f0f0f0;">
+                        <b>Default Transition Legend</b>
+                    </th>
+                </tr>
+                </thead>
+                <tbody id="default-legend-body">
+                <!-- Rows injected by JS -->
+                </tbody>
+            </table>
+        </div>
+        <svg id="automaton-svg"></svg>
+    </div>
+
+    <div id="symbol-sidebar">
+        <div class="sidebar-header">
+            <h3 style="margin: 0 0 10px 0;">Symbol Table</h3>
+            <input type="text" id="symbol-search" placeholder="Search..." oninput="filterSymbolTable()">
+        </div>
+        <div class="table-scroll">
+            <table id="symbol-table-ui">
+                <thead>
+                <tr>
+                    <th>ID</th><th>Sym</th>
+                    <th style="border-left: 2px solid #ccc;">ID</th><th>Sym</th>
+                    <th style="border-left: 2px solid #ccc;">ID</th><th>Sym</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div id="pagination-controls" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: #eee; border-top: 1px solid #ccc;">
+            <button onclick="prevPage()" id="btn-prev" class="action" style="padding: 5px 10px; font-size: 12px;">&laquo; Prev</button>
+            <span id="page-info" style="font-size: 13px; font-weight: bold;">Page 1</span>
+            <button onclick="nextPage()" id="btn-next" class="action" style="padding: 5px 10px; font-size: 12px;">Next &raquo;</button>
+        </div>
+    </div>
+</div>
+
+<div class="action-bar">
+    <button id="btn-generate" class="action" onclick="fetchAndDraw()">Generate & Draw</button>
+    <button id="btn-export" class="action" onclick="exportJson()">Export as JSON</button>
+
+    <!-- New Compression Group -->
+    <div style="display: flex; gap: 5px; align-items: center; margin-left: 20px; border-left: 1px solid #ccc; padding-left: 20px;">
+        <input type="text" id="compressableFilePath" placeholder="File path to compress..." style="width: 200px;">
+        <button id="btn-compress" class="action" style="background: #17a2b8;" onclick="handleCompress()">Compress</button>
+    </div>
+</div>
+
+<!-- Success Toast Notification -->
+<div id="toast-notification" style="display: none; position: fixed; bottom: 30px; right: 30px; background: #28a745; color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 1000; min-width: 300px; transition: opacity 0.5s ease;">
+    <div style="font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 5px;">Compression Successful</div>
+    <div style="font-size: 12px; display: grid; grid-template-columns: auto 1fr; gap: 5px 15px; font-family: monospace;">
+        <span>Symbol:</span> <span id="toast-sym" style="word-break: break-all;"></span>
+        <span>Compressed:</span> <strong id="toast-comp" style="word-break: break-all;"></strong>
+        <span>Original:</span> <span id="toast-uncomp" style="word-break: break-all;"></span>
+    </div>
+</div>
+
+<script src="https://unpkg.com/d3-graphviz@5.0.2/build/d3-graphviz.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
