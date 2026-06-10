@@ -43,18 +43,6 @@ if(NOT EXISTS "${FSST_INCLUDE_DIR}/fsst")
 endif()
 target_include_directories(fsst INTERFACE "${FSST_INCLUDE_DIR}")
 
-add_library(core_base STATIC
-        src/automata.cpp
-        src/percentage.cpp
-        src/common.cpp
-        src/like_pattern_automaton.cpp
-        src/encoder.cpp
-        src/pattern.cpp
-        src/utils.cpp
-        src/serializer.cpp
-)
-target_include_directories(core_base PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(core_base PUBLIC fsst fmt)
 
 find_package(PkgConfig)
 if(PKG_CONFIG_FOUND)
@@ -64,25 +52,43 @@ endif()
 set(LLVM_DIR "/usr/lib/llvm-16/lib/cmake/llvm")
 find_package(LLVM 16 CONFIG)
 
-if(VECTORSCAN_FOUND AND LLVM_FOUND)
-    message(STATUS "LLVM and Vectorscan found. Enabling extended features.")
-    llvm_map_components_to_libnames(llvm_libs core orcjit native nativecodegen)
+if(LLVM_FOUND)
+    message(STATUS "LLVM found. Enabling server.")
 
-    add_library(core_extended STATIC
-            src/vectorscan.cpp
+    llvm_map_components_to_libnames(llvm_libs core orcjit native nativecodegen)
+    add_library(core_base STATIC
+            src/automata.cpp
+            src/percentage.cpp
+            src/common.cpp
+            src/like_pattern_automaton.cpp
+            src/encoder.cpp
+            src/pattern.cpp
+            src/utils.cpp
+            src/serializer.cpp
             src/codegen/codegen.cpp
             src/codegen/cppcodegen.cpp
             src/codegen/llvmcodegen.cpp
     )
-    target_link_libraries(core_extended PUBLIC core_base PkgConfig::VECTORSCAN)
-    target_include_directories(core_extended PUBLIC ${LLVM_INCLUDE_DIRS})
-    target_compile_definitions(core_extended PUBLIC ${LLVM_DEFINITIONS})
+    target_include_directories(core_base PUBLIC ${CMAKE_SOURCE_DIR}/include)
+    target_link_libraries(core_base PUBLIC fsst fmt ${llvm_libs})
+    target_include_directories(core_base PUBLIC ${LLVM_INCLUDE_DIRS})
+    target_compile_definitions(core_base PUBLIC ${LLVM_DEFINITIONS})
+    add_subdirectory(fa-drawing)
 
-    # Only enter these directories if the libraries exist
-    add_subdirectory(benchmark)
-    add_subdirectory(test)
+    if(VECTORSCAN_FOUND)
+        message(STATUS "Vectorscan found. Enabling extended features.")
+        add_library(core_extended STATIC
+                src/vectorscan.cpp
+        )
+        target_link_libraries(core_extended PUBLIC core_base PkgConfig::VECTORSCAN)
+
+
+        add_subdirectory(benchmark)
+        add_subdirectory(test)
+    else()
+        message(STATUS "Vectorscan not found. Benchmarks and tests will be unavailable")
+    endif()
 else()
-    message(WARNING "LLVM 16 or Hyperscan not found. Benchmarks and Tests will be unavailable.")
+    message(WARNING "LLVM 16 not found. All executables are unavailable.")
 endif()
 
-add_subdirectory(fa-drawing)

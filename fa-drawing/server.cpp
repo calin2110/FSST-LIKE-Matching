@@ -11,13 +11,18 @@
 #include <sstream>
 #include <netinet/in.h>
 #include "utils.hpp"
+#include "codegen/cppcodegen.hpp"
+#include "codegen/llvmcodegen.hpp"
 #include <nlohmann/json.hpp>
+
+std::unique_ptr<automata::parsing::LikePatternAutomaton> generateFullAutomaton(const Encoder& encoder, const std::string &patternString) {
+    std::span<const uint8_t> pattern(reinterpret_cast<const uint8_t *>(patternString.data()), patternString.size());
+    return automata::parsing::LikePatternAutomaton::build(pattern, encoder);
+}
 
 std::basic_string<uint8_t> serializeFullPattern(const std::string &symbolTablePath, const std::string &patternString) {
     Encoder encoder(SymbolTable::readFromFile(symbolTablePath.c_str()));
-    std::span<const uint8_t> pattern(reinterpret_cast<const uint8_t *>(patternString.data()), patternString.size());
-
-    auto automaton = automata::parsing::LikePatternAutomaton::build(pattern, encoder);
+    auto automaton = generateFullAutomaton(encoder, patternString);
     auto symbolTable = encoder.getSymbolTable();
     auto serializer = automata::serializer::LikePatternAutomatonSerializer{automaton, symbolTable};
 
@@ -182,7 +187,7 @@ void sendOKResponse(int socket, const char* response, size_t size) {
 
 void handleGenerateEndpoint(int socket, const std::unordered_map<std::string, std::string>& params) {
     std::string pattern = params.find("pattern")->second;
-    std::string symbolTablePath = params.find("symTablePath")->second;
+    std::string symbolTablePath = fmt::format("../../{}", params.find("symTablePath")->second);
     std::string type = params.find("type")->second;
 
     try {
@@ -212,6 +217,67 @@ void handleCompressEndpoint(int socket, const std::unordered_map<std::string, st
     j["compressedPath"] = compressedPath;
     std::string response = j.dump();
     sendOKResponse(socket, response.c_str(), response.size());
+}
+
+void handleCodegenEndpoint(int socket, const std::unordered_map<std::string, std::string>& params) {
+    std::string pattern = params.find("pattern")->second;
+    std::string symbolTablePath = fmt::format("../../{}", params.find("symTablePath")->second);
+    std::string type = params.find("type")->second;
+    std::string language = params.find("language")->second;
+
+    auto fileToResponse = [&](const std::string& filename) -> std::basic_string<uint8_t> {
+        std::ifstream file(filename, std::ios::binary | std::ios::ate);
+
+        if (!file.is_open()) {
+            std::string errorMsg = "HTTP/1.1 500 Could Not Open File\r\n\r\n";
+            send(socket, errorMsg.c_str(), errorMsg.length(), 0);
+        }
+
+        std::basic_string<uint8_t> buffer;
+        std::streamsize size = file.tellg();
+
+        if (size > 0) {
+            buffer.resize(static_cast<size_t>(size));
+            file.seekg(0, std::ios::beg);
+
+            // Stream directly into the string data backing array
+            file.read(reinterpret_cast<char*>(buffer.data()), size);
+        }
+
+        return buffer;
+    };
+
+    try {
+        std::basic_string<uint8_t> response;
+        std::string fullPattern;
+        if (type == "full")
+            fullPattern = pattern;
+        else if (type == "start")
+            fullPattern = fmt::format("{}%", pattern);
+        else if (type == "end")
+            fullPattern = fmt::format("%{}", pattern);
+        else if (type == "middle")
+            fullPattern = fmt::format("%{}%", pattern);
+
+        Encoder encoder(SymbolTable::readFromFile(symbolTablePath.c_str()));
+        auto automaton = generateFullAutomaton(encoder, fullPattern);
+        if (language == "cpp") {
+            std::string cppSource = "cppSource.cpp";
+            automata::codegen::cpp::CppCompiler compiler{cppSource, "libgenerated.so", true};
+            auto parser = compiler.compile(automaton);
+            response = fileToResponse(cppSource);
+        } else if (language == "llvm") {
+            automata::codegen::llvmir::LLVMCompiler compiler{true, true};
+            auto parser = compiler.compile(automaton);
+            response = fileToResponse("optimized_llvm.ll");
+        } else {
+            throw std::runtime_error(fmt::format("Invalid language to compile {}", language));
+        }
+        sendOKResponse(socket, reinterpret_cast<const char*>(response.data()), response.size());
+    } catch (const std::exception &e) {
+        std::string errorMsg = "HTTP/1.1 500 Internal Server Error\r\n\r\n" + std::string(e.what());
+        send(socket, errorMsg.c_str(), errorMsg.length(), 0);
+    }
 }
 
 int main() {
@@ -265,6 +331,8 @@ int main() {
                 handleGenerateEndpoint(newSocket, params);
             } else if (params["endpoint"] == "compress") {
                 handleCompressEndpoint(newSocket, params);
+            } else if (params["endpoint"] == "codegen") {
+                handleCodegenEndpoint(newSocket, params);
             }
 
         }

@@ -814,3 +814,45 @@ function showToast(data) {
         }, 500);
     }, 5000); // Increased to 5s so the user has time to read all 3 paths
 }
+
+async function generateCode(lang) {
+    const pattern = document.getElementById('pattern').value;
+    const symTablePath = document.getElementById('symTablePath').value;
+    const type = document.getElementById('autoType').value;
+
+    try {
+        // Same request parameters as fetchAndDraw()
+        const response = await fetch(
+            `http://127.0.0.1:8080/codegen?pattern=${pattern}&symTablePath=${symTablePath}&type=${type}&language=${lang}`
+        );
+
+        if (!response.ok) {
+            alert(`Failed to generate ${lang} code`);
+            return;
+        }
+
+        // Assuming the backend returns C++ source as plain text
+        const cppCode = await response.text();
+
+        // Create downloadable file
+        const blob = new Blob([cppCode], { type: `text/x-${lang}src` });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `codegen.${lang}`;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        URL.revokeObjectURL(url);
+
+    } catch (error) {
+        console.error(`Error generating ${lang} code:`, error);
+
+        if (document.getElementById('showError').value === 'true') {
+            alert("Error: " + error.message);
+        }
+    }
+}

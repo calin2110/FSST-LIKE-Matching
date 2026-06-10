@@ -77,7 +77,7 @@ void automata::codegen::cpp::CppCompiler::generateTransitionArrays(const std::un
             for (const auto& [symbol, dest]: start->transitions) {
                 if (symbol != 255 || !dest->transitions.empty()) {
                     ss << fmt::format("constexpr uint8_t {} = {};\n", getSIMDCmpeqepi8SymbolName(start, symbol), symbol);
-                    ss << fmt::format("__m128i {} = _mm_set1_epi8(*reinterpret_cast<const char*>(&{}));", getSIMDCmpeqepi8VectorName(start, symbol), getSIMDCmpeqepi8SymbolName(start, symbol));
+                    ss << fmt::format("__m128i {} = _mm_set1_epi8(*reinterpret_cast<const char*>(&{}));\n", getSIMDCmpeqepi8VectorName(start, symbol), getSIMDCmpeqepi8SymbolName(start, symbol));
                 }
             }
         }
@@ -194,7 +194,7 @@ void automata::codegen::cpp::CppCompiler::generateBackwards(const std::optional<
     for (const State* pseudoEnd: pseudoEnds) {
         ss << fmt::format("\t\tcase {}:\n", getEnumStateName(pseudoEnd, direction));
         ss << fmt::format("\t\t\t*symIdx = {};\n", pseudoEnd->endIdx.value());
-        ss << fmt::format("\t\t\t\t*strIdx -= {};\n", direction);
+        ss << fmt::format("\t\t\t*strIdx -= {};\n", direction);
         ss << fmt::format("\t\t\treturn true;\n");
     }
     ss << "\t\tdefault:\n";
@@ -235,7 +235,7 @@ void automata::codegen::cpp::CppCompiler::generateForwards(const std::optional<p
     for (size_t idx = 0; idx < params->acceptStates->size(); ++idx) {
         ss << fmt::format("\t\tcase {}:\n", getEnumStateName(&params->acceptStates->data()[idx], direction));
         ss << fmt::format("\t\t\t*symIdx = {};\n", idx);
-        ss << fmt::format("\t\t\t\t*strIdx -= {};\n", direction);
+        ss << fmt::format("\t\t\t*strIdx -= {};\n", direction);
         ss << fmt::format("\t\t\treturn true;\n");
     }
     ss << "\t\tdefault:\n";
@@ -251,22 +251,22 @@ void automata::codegen::cpp::CppCompiler::generateFullParse(const std::optional<
             ss << "\treturn false;";
             break;
         case ParsingType::ONLY_FORWARD:
-            ss << fmt::format("\tif (len < {})", forwardLevel.value());
-            ss << "\t\treturn false;";
+            ss << fmt::format("\tif (len < {})\n", forwardLevel.value());
+            ss << "\t\treturn false;\n";
             ss << "\tint64_t strIdx = 0;\n";
             ss << "\tuint8_t symIdx;\n";
             ss << fmt::format("\treturn {}(compressed, len, &strIdx, &symIdx);\n", CppCompiler::getForwardParseFunctionName());
             break;
         case ParsingType::ONLY_BACKWARDS:
-            ss << fmt::format("\tif (len < {})", backwardsLevel.value());
-            ss << "\t\treturn false;";
+            ss << fmt::format("\tif (len < {})\n", backwardsLevel.value());
+            ss << "\t\treturn false;\n";
             ss << "\tint64_t strIdx = static_cast<int64_t>(len) - 1;\n";
             ss << "\tuint8_t symIdx;\n";
             ss << fmt::format("\treturn {}(compressed, len, &strIdx, &symIdx);\n", CppCompiler::getBackwardsParseFunctionName());
             break;
         case ParsingType::BOTH_DIRECTIONS:
             ss << fmt::format("\tif (len < {})\n", forwardLevel.value() + backwardsLevel.value() - 1);
-            ss << "\t\treturn false;";
+            ss << "\t\treturn false;\n";
             ss << "\tint64_t strIdx = static_cast<int64_t>(len) - 1;\n";
             ss << "\tuint8_t endSymIdx;\n";
             ss << fmt::format("\tbool canParse = {}(compressed, len, &strIdx, &endSymIdx);\n", CppCompiler::getBackwardsParseFunctionName());
@@ -431,7 +431,7 @@ void automata::codegen::cpp::CppStateCodegen::generateMiddleStart(const State *s
     ss << "\t\t\t\t\tprevByte = compressed[currentStrIdx - 1];\n";
     ss << "\t\t\t\t} else {\n";
     ss << "\t\t\t\t\tprevByte = 0;\n";
-    ss << "\t\t\t\t}";
+    ss << "\t\t\t\t}\n";
     ss << fmt::format("\t\t\t\twhile (currentStrIdx <= maxIdx && (!{}[compressed[currentStrIdx]] || prevByte == 255)) {{\n", CppCompiler::getTransitionArrayName(state));
     ss << fmt::format("\t\t\t\t\tprevByte = compressed[currentStrIdx];\n");
     ss << fmt::format("\t\t\t\t\t++currentStrIdx;\n");

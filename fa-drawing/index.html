@@ -266,6 +266,9 @@
         <input type="text" id="compressableFilePath" placeholder="File path to compress..." style="width: 200px;">
         <button id="btn-compress" class="action" style="background: #17a2b8;" onclick="handleCompress()">Compress</button>
     </div>
+
+    <button id="btn-cppcodegen" class="action" onclick="generateCode('cpp')">Export C++ Code</button>
+    <button id="btn-llvmcodegen" class="action" onclick="generateCode('llvm')">Export LLVM Code</button>
 </div>
 
 <!-- Success Toast Notification -->
