@@ -173,6 +173,44 @@ std::unordered_map<std::string, std::string> parseGETParams(const std::string &u
     return params;
 }
 
+// Function to Decode URI Parameters
+std::string decodeURI(const std::string &value) {
+    std::string result;
+    result.reserve(value.length());
+
+    auto hexToValue = [](char c) {
+        if (c >= '0' && c <= '9') return c - '0';
+        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+        return 0;
+    };
+
+    for (size_t i = 0; i < value.length(); ++i) {
+        // Check for a % followed by at least two characters
+        if (value[i] == '%' && i + 2 < value.length()) {
+            char hi = value[i + 1];
+            char lo = value[i + 2];
+
+            // Verify that both characters are valid hexadecimal digits
+            if (std::isxdigit(static_cast<unsigned char>(hi)) &&
+                std::isxdigit(static_cast<unsigned char>(lo))) {
+
+                char decodedChar = static_cast<char>((hexToValue(hi) << 4) | hexToValue(lo));
+                result += decodedChar;
+                i += 2; // Skip the two hex digits
+                continue;
+            }
+        }
+        else if (value[i] == '+') {
+            result += ' ';
+            continue;
+        }
+        result += value[i];
+    }
+
+    return result;
+}
+
 void sendOKResponse(int socket, const char* response, size_t size) {
     std::string header =
             fmt::format("HTTP/1.1 200 OK\r\n"
@@ -186,10 +224,12 @@ void sendOKResponse(int socket, const char* response, size_t size) {
 }
 
 void handleGenerateEndpoint(int socket, const std::unordered_map<std::string, std::string>& params) {
-    std::string pattern = params.find("pattern")->second;
-    std::string symbolTablePath = fmt::format("../../{}", params.find("symTablePath")->second);
-    std::string type = params.find("type")->second;
-
+    std::string pattern = decodeURI(params.find("pattern")->second);
+    filesystem::path relativePath = decodeURI(params.find("symTablePath")->second);
+    filesystem::path absolutePath = filesystem::absolute(relativePath);
+    std::string symbolTablePath = relativePath.string();
+    std::string type = decodeURI(params.find("type")->second);
+    fmt::println("Called generate endpoint with pattern {}, symbol table path {} and pattern type {}", pattern, absolutePath.string(), type);
     try {
         std::basic_string<uint8_t> response;
         if (type == "full")
@@ -208,7 +248,8 @@ void handleGenerateEndpoint(int socket, const std::unordered_map<std::string, st
 }
 
 void handleCompressEndpoint(int socket, const std::unordered_map<std::string, std::string>& params) {
-    std::string filepath = params.find("filepath")->second;
+    std::string filepath = (filesystem::path("..") / decodeURI(params.find("filepath")->second));
+    fmt::println("Called compress endpoint with filepath {}", filepath);
     auto [symTablePath, uncompressedPath, compressedPath] = compressFile(filepath);
 
     nlohmann::json j;
@@ -220,11 +261,12 @@ void handleCompressEndpoint(int socket, const std::unordered_map<std::string, st
 }
 
 void handleCodegenEndpoint(int socket, const std::unordered_map<std::string, std::string>& params) {
-    std::string pattern = params.find("pattern")->second;
-    std::string symbolTablePath = fmt::format("../../{}", params.find("symTablePath")->second);
-    std::string type = params.find("type")->second;
-    std::string language = params.find("language")->second;
-
+    std::string pattern = decodeURI(params.find("pattern")->second);
+    filesystem::path relativePath = decodeURI(params.find("symTablePath")->second);
+    filesystem::path absolutePath = filesystem::absolute(relativePath);
+    std::string symbolTablePath = relativePath.string();    std::string type = decodeURI(params.find("type")->second);
+    std::string language = decodeURI(params.find("language")->second);
+    fmt::println("Called codegen endpoint having pattern {}, symbol table path {}, pattern type {} and language {}", pattern, absolutePath.string(), type, language);
     auto fileToResponse = [&](const std::string& filename) -> std::basic_string<uint8_t> {
         std::ifstream file(filename, std::ios::binary | std::ios::ate);
 

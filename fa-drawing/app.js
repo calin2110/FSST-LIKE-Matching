@@ -523,7 +523,7 @@ async function fetchAndDraw() {
 
     try {
         // 1. Fetch the binary data from the backend
-        const response = await fetch(`http://127.0.0.1:8080/generate?pattern=${pattern}&symTablePath=${symTablePath}&type=${type}`);
+        const response = await fetch(`http://127.0.0.1:8080/generate?pattern=${encodeURIComponent(pattern)}&symTablePath=${encodeURIComponent(symTablePath)}&type=${encodeURIComponent(type)}`);
         if (!response.ok)
             alert("Failed to generate automaton");
 
@@ -780,7 +780,7 @@ async function handleCompress() {
     btn.textContent = "Processing...";
 
     try {
-        const response = await fetch(`http://127.0.0.1:8080/compress?filepath=${filePath}`);
+        const response = await fetch(`http://127.0.0.1:8080/compress?filepath=${encodeURIComponent(filePath)}`);
         if (!response.ok)
             alert("Failed to compress file");
         const data = await response.json();
@@ -823,7 +823,7 @@ async function generateCode(lang) {
     try {
         // Same request parameters as fetchAndDraw()
         const response = await fetch(
-            `http://127.0.0.1:8080/codegen?pattern=${pattern}&symTablePath=${symTablePath}&type=${type}&language=${lang}`
+            `http://127.0.0.1:8080/codegen?pattern=${encodeURIComponent(pattern)}&symTablePath=${encodeURIComponent(symTablePath)}&type=${encodeURIComponent(type)}&language=${encodeURIComponent(lang)}`
         );
 
         if (!response.ok) {
