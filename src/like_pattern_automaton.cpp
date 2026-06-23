@@ -27,7 +27,7 @@
 
 #include "pattern.hpp"
 #include "common.hpp"
-
+#include <ranges>
 automata::parsing::LikePatternAutomaton::LikePatternAutomaton(): startMatch(), middleMatches(), endMatch(), acceptStates(9), errorState(std::make_unique<State>(nullptr)) {}
 
 std::unique_ptr<automata::parsing::LikePatternAutomaton> automata::parsing::LikePatternAutomaton::build(const std::span<const uint8_t> &match, const Encoder& encoder) {
@@ -113,71 +113,184 @@ std::optional<automata::parsing::LikePatternAutomaton::AutomatonParams> automata
     return ret;
 }
 
-automata::parsing::LikePatternAutomatonParser::LikePatternAutomatonParser(const std::span<const uint8_t> &match, const Encoder &encoder): automaton(LikePatternAutomaton::build(match, encoder)) {}
+automata::parsing::LikePatternAutomatonParser::LikePatternAutomatonParser(const std::span<const uint8_t> &match, const Encoder &encoder) {
+    std::unique_ptr<LikePatternAutomaton> automaton = LikePatternAutomaton::build(match, encoder);
+    if (!automaton) {
+        return;
+    }
+
+    auto getUselessStates = [&](State* state, State* destination) {
+        std::unordered_set<State*> uselessStates;
+        std::basic_string<uint8_t> fix{};
+        while (state != destination) {
+            uselessStates.insert(state);
+            fix.push_back(state->transitions.begin()->first);
+            state = state->transitions.begin()->second;
+        }
+        return uselessStates;
+    };
+
+    if (automaton->startMatch.has_value() || !automaton->middleMatches.empty()) {
+        size_t numStates = 0;
+
+        std::unordered_map<State*, size_t> indexMap{};
+        auto& prefixAutomaton = automaton->startMatch;
+
+        std::basic_string<uint8_t> prefix{};
+        if (prefixAutomaton.has_value()) {
+            prefix = prefixAutomaton->deterministicPath;
+            auto uselessStates = getUselessStates(prefixAutomaton->startState.get(), prefixAutomaton->actualStartState);
+
+            if (!uselessStates.contains(prefixAutomaton->startState.get())) {
+                indexMap[prefixAutomaton->startState.get()] = numStates++;
+            }
+            for (auto& state: prefixAutomaton->states) {
+                if (!uselessStates.contains(&state))
+                    indexMap[&state] = numStates++;
+            }
+        }
+
+        for (auto& middleAutomaton : automaton->middleMatches | std::views::reverse) {
+            for (auto& state: middleAutomaton.states) {
+                indexMap[&state] = numStates++;
+            }
+        }
+
+        indexMap[automaton->errorState.get()] = numStates++;
+        size_t error = indexMap[automaton->errorState.get()];
+        for (auto& state: automaton->acceptStates) {
+            indexMap[&state] = numStates++;
+        }
+        size_t firstAccept = indexMap[&automaton->acceptStates.front()];
+        size_t start = indexMap[prefixAutomaton.has_value() ? prefixAutomaton->actualStartState : automaton->middleMatches.back().defaultTransition];
+
+        forwardTable = std::make_optional<AutomatonTable>(indexMap, false, error, firstAccept, prefix, start);
+    }
+
+    if (automaton->endMatch.has_value()) {
+        size_t numStates = 0;
+
+        std::unordered_map<State*, size_t> indexMap{};
+        auto& suffixAutomaton = automaton->endMatch;
+
+        auto uselessStates = getUselessStates(suffixAutomaton->startState.get(), suffixAutomaton->actualStartState);
+        std::basic_string<uint8_t> suffix = suffixAutomaton->deterministicPath;
+
+        if (!uselessStates.contains(suffixAutomaton->startState.get())) {
+            indexMap[suffixAutomaton->startState.get()] = numStates++;
+        }
+        for (auto& state: suffixAutomaton->states) {
+            if (!uselessStates.contains(&state)) {
+                indexMap[&state] = numStates++;
+            }
+        }
+
+        indexMap[automaton->errorState.get()] = numStates++;
+        size_t error = indexMap[automaton->errorState.get()];
+        for (auto& state: automaton->acceptStates) {
+            indexMap[&state] = numStates++;
+        }
+        size_t firstAccept = indexMap[&automaton->acceptStates.front()];
+        size_t start = indexMap[suffixAutomaton->actualStartState];
+        backwardsTable = std::make_optional<AutomatonTable>(indexMap, true, error, firstAccept, suffix, start);
+    }
+}
 
 bool automata::parsing::LikePatternAutomatonParser::parse(const std::span<const uint8_t> &match) const {
     assert(!match.empty());
-
     int64_t backwardsStrIdx = static_cast<int64_t>(match.size()) - 1;
     uint8_t backwardsSymbolIdx = 8;
-    if (automaton->endMatch.has_value()) {
-        std::basic_string_view<uint8_t> match_view(match.data(), match.size());
-        std::basic_string_view<uint8_t> suffix_view(automaton->endMatch->deterministicPath.data(), automaton->endMatch->deterministicPath.size());
-
-        if (!match_view.ends_with(suffix_view)) {
+    if (backwardsTable.has_value()) {
+        if (!backwardsTable->parse<false>(&backwardsStrIdx, &backwardsSymbolIdx, match.data(), match.size()))
             return false;
-        }
-        backwardsStrIdx = match.size() - suffix_view.size() - 1;
-        State* currentState = automaton->endMatch->actualStartState;
-        while (backwardsStrIdx + 1 >= currentState->level && currentState != automaton->errorState.get() && !isEndState(currentState, automaton->acceptStates)) {
-            currentState = currentState->transition(match[backwardsStrIdx]);
-            --backwardsStrIdx;
-        }
-
-        if (isEndState(currentState, automaton->acceptStates)) {
-            backwardsStrIdx += 2;
-            backwardsSymbolIdx = getEndIndex(currentState, automaton->acceptStates);
-        } else {
-            if (currentState->endIdx.has_value()) {
-                ++backwardsStrIdx;
-                backwardsSymbolIdx = currentState->endIdx.value();
-            } else {
-                return false;
-            }
-        }
     }
 
-    if (!automaton->startMatch.has_value() && automaton->middleMatches.empty()) {
-        return true;
-    }
-
-    State* currentState;
-    size_t forwardStrIdx;
-    if (automaton->startMatch.has_value()) {
-        std::basic_string_view<uint8_t> match_view(match.data(), backwardsStrIdx + 1);
-        std::basic_string_view<uint8_t> prefix_view(automaton->startMatch->deterministicPath.data(), automaton->startMatch->deterministicPath.size());
-
-        if (!match_view.starts_with(prefix_view)) {
+    if (forwardTable.has_value()) {
+        int64_t forwardStrIdx = 0;
+        uint8_t forwardSymbolIdx = 0;
+        if (!forwardTable->parse<true>(&forwardStrIdx, &forwardSymbolIdx, match.data(), backwardsStrIdx + 1))
             return false;
-        }
-        currentState = automaton->startMatch->actualStartState;
-        forwardStrIdx = prefix_view.size();
-    } else {
-        currentState = automaton->middleMatches.back().starts[0];
-        forwardStrIdx = 0;
+        else
+            return forwardStrIdx < backwardsStrIdx || forwardSymbolIdx <= backwardsSymbolIdx;
     }
-    while (currentState != automaton->errorState.get() && forwardStrIdx + currentState->level <= backwardsStrIdx + 1 && !isEndState(currentState, automaton->acceptStates)) {
-        currentState = currentState->transition(match[forwardStrIdx]);
-        ++forwardStrIdx;
-    }
-
-    if (!isEndState(currentState, automaton->acceptStates)) {
-        return false;
-    }
-    uint8_t forwardSymbolIdx = getEndIndex(currentState, automaton->acceptStates);
-    return forwardStrIdx < backwardsStrIdx + 1 || forwardSymbolIdx <= backwardsSymbolIdx;
+    return true;
 }
 
+
 bool automata::parsing::LikePatternAutomatonParser::hasEmptyAutomaton() const {
-    return automaton.get() == nullptr;
+    return !forwardTable.has_value() && !backwardsTable.has_value();
+}
+
+automata::parsing::AutomatonTable::AutomatonTable(std::unordered_map<State*, size_t>& indexMap, bool isBackwards, size_t error, size_t firstAccept, const std::basic_string<uint8_t>& fix, size_t start): error(error), firstAccept(firstAccept), fix(std::move(fix)), start(start) {
+    size_t numStates = indexMap.size();
+    if (numStates <= 256) {
+        shift = 0;
+    } else if (numStates <= 65536) {
+        shift = 1;
+    } else if (numStates <= 4294967296) {
+        shift = 2;
+    } else {
+        shift = 3;
+    }
+    size_t numAcceptStates = 9;
+    size_t numErrorStates = 1;
+    size_t realStates = numStates - numAcceptStates - numErrorStates;
+
+    size_t tableAllocation = realStates << (8 + shift);
+    size_t levelAllocation = realStates * sizeof(size_t);
+    size_t pseudoAcceptAllocation;
+    if (isBackwards) {
+        pseudoAcceptAllocation = realStates * sizeof(uint8_t);
+    } else {
+        pseudoAcceptAllocation = 0;
+    }
+    size_t totalMemoryAllocation = tableAllocation + levelAllocation + pseudoAcceptAllocation;
+    if (totalMemoryAllocation % sizeof(AlignmentType) != 0) {
+        totalMemoryAllocation = (totalMemoryAllocation / sizeof(AlignmentType) + 1) * sizeof(size_t);
+    }
+    data = std::make_unique<AlignmentType[]>(totalMemoryAllocation / sizeof(AlignmentType));
+
+    levels = reinterpret_cast<size_t*>(data.get());
+    table = reinterpret_cast<uint8_t*>(data.get()) + levelAllocation;
+    if (pseudoAcceptAllocation == 0) {
+        pseudoAccepts = nullptr;
+    } else {
+        pseudoAccepts = reinterpret_cast<uint8_t*>(data.get()) + tableAllocation + levelAllocation;
+    }
+
+    auto fillTransitions = [&]<typename T>(T) {
+        for (auto& [state, index] : indexMap) {
+            if (index >= realStates) {
+                continue;
+            }
+            levels[index] = state->level;
+            if (pseudoAccepts) {
+                pseudoAccepts[index] = state->endIdx.has_value() ? state->endIdx.value() : kNonPseudoEnd;
+            }
+
+            T* row = reinterpret_cast<T*>(table + (index << (8 + shift)));
+
+            for (size_t c = 0; c < 256; ++c) {
+                State* nextState = state->transition(c);
+                assert(indexMap.contains(nextState));
+                size_t nextIndex = indexMap[nextState];
+                row[c] = static_cast<T>(nextIndex);
+            }
+        }
+    };
+
+    switch (shift) {
+        case 0:
+            fillTransitions(uint8_t{});
+            break;
+        case 1:
+            fillTransitions(uint16_t{});
+            break;
+        case 2:
+            fillTransitions(uint32_t{});
+            break;
+        case 3:
+            fillTransitions(uint64_t{});
+            break;
+    }
 }

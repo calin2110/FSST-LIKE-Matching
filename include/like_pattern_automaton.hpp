@@ -59,9 +59,70 @@ namespace automata::parsing {
         friend class LikePatternAutomatonParser;
     };
 
+    class AutomatonTable {
+    using AlignmentType = size_t;
+
+    private:
+        static constexpr uint8_t kNonPseudoEnd = 0xFF;
+        std::unique_ptr<AlignmentType[]> data;
+
+    public:
+        uint8_t* table;
+        size_t* levels;
+        uint8_t* pseudoAccepts;
+        size_t error;
+        size_t firstAccept;
+        uint8_t shift;
+        size_t start;
+        std::basic_string<uint8_t> fix;
+
+        AutomatonTable(std::unordered_map<State*, size_t>& indexMap, bool isBackwards, size_t error, size_t firstAccept, const std::basic_string<uint8_t>& fix, size_t start);
+
+        template <bool Forwards>
+        bool parse(int64_t* strIdx, uint8_t* symIdx, const uint8_t* str, size_t len) const {
+            auto parseImplementation = [&]<typename T>(T) {
+                T currentState = static_cast<T>(start);
+                const T errorState = static_cast<T>(error);
+                const T firstAcceptState = static_cast<T>(firstAccept);
+                if constexpr (Forwards) {
+                    if (!std::basic_string_view<uint8_t>{str, len}.starts_with(fix))
+                        return false;
+                    *strIdx = fix.size();
+                } else {
+                    if (!std::basic_string_view<uint8_t>{str, len}.ends_with(fix))
+                        return false;
+                    *strIdx = len - fix.size() - 1;
+                }
+                while (currentState < error && (Forwards ? *strIdx + levels[currentState] <= len :*strIdx + 1 >= levels[currentState])) {
+                    size_t index = Forwards ? (*strIdx)++ : (*strIdx)--;
+                    currentState = reinterpret_cast<T*>(table + (currentState << (8 + shift)))[str[index]];
+                }
+                if (currentState >= firstAcceptState) {
+                    *symIdx = currentState - firstAcceptState;
+                    *strIdx += (Forwards ? -1 : 2);
+                    return true;
+                }
+                if (!Forwards && currentState != errorState && pseudoAccepts[currentState] != kNonPseudoEnd) {
+                    *symIdx = pseudoAccepts[currentState];
+                    *strIdx += 1;
+                    return true;
+                }
+                return false;
+            };
+
+            switch (shift) {
+                case 0: return parseImplementation(uint8_t{});
+                case 1: return parseImplementation(uint16_t{});
+                case 2: return parseImplementation(uint32_t{});
+                case 3: return parseImplementation(uint64_t{});
+            }
+        }
+    };
+
     class LikePatternAutomatonParser {
     private:
-        std::unique_ptr<LikePatternAutomaton> automaton;
+        std::optional<AutomatonTable> forwardTable;
+        std::optional<AutomatonTable> backwardsTable;
 
     public:
         LikePatternAutomatonParser(const std::span<const uint8_t>& match, const Encoder& encoder);
