@@ -687,7 +687,7 @@ function getCellHtml(item, border = false) {
     const borderStyle = border ? 'border-left: 2px solid #ccc;' : '';
     return `
         <td style="${borderStyle} font-family: monospace; color: #888; font-size: 0.8em; width: 25px;">${item.id}</td>
-        <td style="word-break: break-all; font-size: 0.85em;"><strong>${item.sym}</strong></td>
+        <td style="word-break: break-all; font-size: 0.85em;"><strong>"${item.sym}"</strong></td>
     `;
 }
 
