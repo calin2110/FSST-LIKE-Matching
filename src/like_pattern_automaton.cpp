@@ -131,9 +131,12 @@ automata::parsing::LikePatternAutomatonParser::LikePatternAutomatonParser(const 
     };
 
     if (automaton->startMatch.has_value() || !automaton->middleMatches.empty()) {
-        size_t numStates = 0;
-
         std::unordered_map<State*, size_t> indexMap{};
+        size_t numStates = 0;
+        for (auto& middleAutomaton : automaton->middleMatches | std::views::reverse) {
+            indexMap[middleAutomaton.defaultTransition] = numStates++;
+        }
+
         auto& prefixAutomaton = automaton->startMatch;
 
         std::basic_string<uint8_t> prefix{};
@@ -152,6 +155,9 @@ automata::parsing::LikePatternAutomatonParser::LikePatternAutomatonParser(const 
 
         for (auto& middleAutomaton : automaton->middleMatches | std::views::reverse) {
             for (auto& state: middleAutomaton.states) {
+                if (&state == middleAutomaton.defaultTransition) {
+                    continue;
+                }
                 indexMap[&state] = numStates++;
             }
         }
@@ -164,7 +170,7 @@ automata::parsing::LikePatternAutomatonParser::LikePatternAutomatonParser(const 
         size_t firstAccept = indexMap[&automaton->acceptStates.front()];
         size_t start = indexMap[prefixAutomaton.has_value() ? prefixAutomaton->actualStartState : automaton->middleMatches.back().defaultTransition];
 
-        forwardTable = std::make_optional<AutomatonTable>(indexMap, false, error, firstAccept, prefix, start);
+        forwardTable = std::make_optional<AutomatonTable>(indexMap, false, error, firstAccept, prefix, start, automaton->middleMatches.size());
     }
 
     if (automaton->endMatch.has_value()) {
@@ -192,7 +198,7 @@ automata::parsing::LikePatternAutomatonParser::LikePatternAutomatonParser(const 
         }
         size_t firstAccept = indexMap[&automaton->acceptStates.front()];
         size_t start = indexMap[suffixAutomaton->actualStartState];
-        backwardsTable = std::make_optional<AutomatonTable>(indexMap, true, error, firstAccept, suffix, start);
+        backwardsTable = std::make_optional<AutomatonTable>(indexMap, true, error, firstAccept, suffix, start, 0);
     }
 }
 
@@ -221,7 +227,7 @@ bool automata::parsing::LikePatternAutomatonParser::hasEmptyAutomaton() const {
     return !forwardTable.has_value() && !backwardsTable.has_value();
 }
 
-automata::parsing::AutomatonTable::AutomatonTable(std::unordered_map<State*, size_t>& indexMap, bool isBackwards, size_t error, size_t firstAccept, const std::basic_string<uint8_t>& fix, size_t start): error(error), firstAccept(firstAccept), fix(std::move(fix)), start(start) {
+automata::parsing::AutomatonTable::AutomatonTable(std::unordered_map<State*, size_t>& indexMap, bool isBackwards, size_t error, size_t firstAccept, const std::basic_string<uint8_t>& fix, size_t start, size_t N): error(error), firstAccept(firstAccept), fix(fix), start(start), N(N) {
     size_t numStates = indexMap.size();
     if (numStates <= 256) {
         shift = 0;
@@ -236,7 +242,10 @@ automata::parsing::AutomatonTable::AutomatonTable(std::unordered_map<State*, siz
     size_t numErrorStates = 1;
     size_t realStates = numStates - numAcceptStates - numErrorStates;
 
-    size_t tableAllocation = realStates << (8 + shift);
+    size_t transitionsAllocation = realStates << (8 + shift);
+    size_t transitionArrayAllocation = N * kTransitionArraySize;
+    size_t tableAllocation = transitionsAllocation + transitionArrayAllocation;
+
     size_t levelAllocation = realStates * sizeof(size_t);
     size_t pseudoAcceptAllocation;
     if (isBackwards) {
@@ -258,6 +267,10 @@ automata::parsing::AutomatonTable::AutomatonTable(std::unordered_map<State*, siz
         pseudoAccepts = reinterpret_cast<uint8_t*>(data.get()) + tableAllocation + levelAllocation;
     }
 
+    constexpr auto setBit = [](uint8_t* data, size_t i) {
+        data[i / 8] |= (1u << (i % 8));
+    };
+
     auto fillTransitions = [&]<typename T>(T) {
         for (auto& [state, index] : indexMap) {
             if (index >= realStates) {
@@ -268,7 +281,16 @@ automata::parsing::AutomatonTable::AutomatonTable(std::unordered_map<State*, siz
                 pseudoAccepts[index] = state->endIdx.has_value() ? state->endIdx.value() : kNonPseudoEnd;
             }
 
-            T* row = reinterpret_cast<T*>(table + (index << (8 + shift)));
+            T* row;
+            if (index < N) {
+                uint8_t* arrayPtr = table + (index << (8 + shift)) + index * kTransitionArraySize;
+                for (uint8_t symbol : state->transitions | std::views::keys) {
+                    setBit(arrayPtr, symbol);
+                }
+                row = reinterpret_cast<T*>(arrayPtr + kTransitionArraySize);
+            } else {
+                row = reinterpret_cast<T*>(table + (index << (8 + shift)) + N * kTransitionArraySize);
+            }
 
             for (size_t c = 0; c < 256; ++c) {
                 State* nextState = state->transition(c);

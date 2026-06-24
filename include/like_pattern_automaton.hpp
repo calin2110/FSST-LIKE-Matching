@@ -64,6 +64,7 @@ namespace automata::parsing {
 
     private:
         static constexpr uint8_t kNonPseudoEnd = 0xFF;
+        static constexpr size_t kTransitionArraySize = 32;
         std::unique_ptr<AlignmentType[]> data;
 
     public:
@@ -75,11 +76,16 @@ namespace automata::parsing {
         uint8_t shift;
         size_t start;
         std::basic_string<uint8_t> fix;
+        size_t N;
 
-        AutomatonTable(std::unordered_map<State*, size_t>& indexMap, bool isBackwards, size_t error, size_t firstAccept, const std::basic_string<uint8_t>& fix, size_t start);
+        AutomatonTable(std::unordered_map<State*, size_t>& indexMap, bool isBackwards, size_t error, size_t firstAccept, const std::basic_string<uint8_t>& fix, size_t start, size_t N);
 
         template <bool Forwards>
         bool parse(int64_t* strIdx, uint8_t* symIdx, const uint8_t* str, size_t len) const {
+            constexpr auto getBit = [](const uint8_t* data, size_t i) -> bool {
+                return (data[i / 8] >> (i % 8)) & 1u;
+            };
+
             auto parseImplementation = [&]<typename T>(T) {
                 T currentState = static_cast<T>(start);
                 const T errorState = static_cast<T>(error);
@@ -94,8 +100,26 @@ namespace automata::parsing {
                     *strIdx = len - fix.size() - 1;
                 }
                 while (currentState < error && (Forwards ? *strIdx + levels[currentState] <= len :*strIdx + 1 >= levels[currentState])) {
-                    size_t index = Forwards ? (*strIdx)++ : (*strIdx)--;
-                    currentState = reinterpret_cast<T*>(table + (currentState << (8 + shift)))[str[index]];
+                    if (Forwards) {
+                        if (currentState < N) {
+                            size_t level = levels[currentState];
+                            int64_t currentIdx = *strIdx;
+                            uint8_t* transitionArray = table + (currentState << (8 + shift)) + currentState * kTransitionArraySize;
+                            while (currentIdx + level <= len && !getBit(transitionArray, str[currentIdx]))
+                                ++currentIdx;
+                            if (currentIdx + level > len)
+                                return false;
+                            T* row = reinterpret_cast<T*>(transitionArray + kTransitionArraySize);
+                            currentState = row[str[currentIdx]];
+                            *strIdx = currentIdx + 1;
+                        } else {
+                            int64_t index = (*strIdx)++;
+                            currentState = reinterpret_cast<T*>(table + (currentState << (8 + shift)) + N * kTransitionArraySize)[str[index]];
+                        }
+                    } else {
+                        int64_t index = (*strIdx)--;
+                        currentState = reinterpret_cast<T*>(table + (currentState << (8 + shift)))[str[index]];
+                    }
                 }
                 if (currentState >= firstAcceptState) {
                     *symIdx = currentState - firstAcceptState;
