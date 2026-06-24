@@ -1,0 +1,216 @@
+patternId,dataset,queryNum,table,pattern
+0,TPCH,Q13,orders,%special%requests%
+1,TPCH,,orders,%regular%deposits%
+2,TPCH,,orders,%unusual%packages%
+3,TPCH,,orders,%pending%
+4,TPCH,Q9,part,%green%
+5,TPCH,Q20,part,%forest%
+6,TPCH,,part,%blue%
+7,TPCH,,part,dark %
+8,TPCH,,part,%sky%blue%
+9,TPCH,,part,%firebrick%
+10,TPCH,Q2,part,%BRASS%
+11,TPCH,Q14,part,%PROMO%
+12,TPCH,Q16,part,MEDIUM POLISHED%
+13,TPCH,,part,%BRASS
+14,TPCH,,part,%STEEL%
+15,TPCH,,part,PROMO %
+16,TPCH,,part,%NICKEL
+17,TPCH,,part,STANDARD %
+18,TPCH,Q16,supplier,%Customer%Complaints
+19,TPCH,,supplier,Customer%Complaints%
+20,TPCH,,supplier,%usual%packages%
+21,TPCH,,supplier,%Recommends%
+22,TPCH,,supplier,Customer%Account%
+23,StackOverflow,,Comments,Why do%you%?
+24,StackOverflow,,Comments,%do we%actually%
+25,StackOverflow,,Comments,%why%C++%
+26,StackOverflow,,Comments,%how is%this%
+27,StackOverflow,,Comments,%cannot%.
+28,StackOverflow,,PostHistory,%php%is%shit%
+29,StackOverflow,,PostHistory,I love%C++%but%
+30,StackOverflow,,PostHistory,%sometimes%know.
+31,StackOverflow,,PostHistory,%SELECT *%LIMIT 1%
+32,StackOverflow,,PostHistory,WITH RECURSIVE%SQL
+33,StackOverflow,,PostHistory,%define%then%double%
+34,StackOverflow,,Posts,<p>I have tried%
+35,StackOverflow,,Posts,%cannot%fathom%C++%
+36,StackOverflow,,Posts,%why%happening%
+37,StackOverflow,,Posts,%what%is%there
+38,StackOverflow,,Posts,<p>We%try%
+39,IMDB,,actors,Fred %
+40,IMDB,,actors,Marlon %
+41,IMDB,,actors,J. % R%
+42,IMDB,,actors,Gillian %
+43,IMDB,,actors,Tomás S%
+44,IMDB,,actors,% Astaire
+45,IMDB,,actors,% Bogart
+46,IMDB,,actors,% Brando
+47,IMDB,,actors,% de Havilland
+48,IMDB,,actors,%-Stahl
+49,IMDB,,actors,%Lauren%
+50,IMDB,,actors,%Humphrey%
+51,IMDB,,actors,%James %
+52,IMDB,,actors,%Audrey%Hepburn%
+53,IMDB,,actors,%Alan % M%
+54,IMDB,,actors,%de %
+55,IMDB,,actors,%Gillian%Anderson%
+56,IMDB,,actors,%Richard % P%
+57,IMDB,,actors,% Scott%
+58,IMDB,,actors,% B. %
+59,IMDB,,films,The %
+60,IMDB,,films,Episode #1.%
+61,IMDB,,films,Blacksmith %
+62,IMDB,,films,Le clown %
+63,IMDB,,films,B96 - Roadtrip % (1) %
+64,IMDB,,films,% (1) - % Berlin
+65,IMDB,,films,% Scene
+66,IMDB,,films,% Rome
+67,IMDB,,films,% Survival
+68,IMDB,,films,% of a Train
+69,IMDB,,films,%Donaukreuzfahrt%
+70,IMDB,,films,%Roadtrip%Straße%
+71,IMDB,,films,%King%of%The%
+72,IMDB,,films,%Love%and%
+73,IMDB,,films,%Episode%#%.%
+74,IMDB,,films,%Känguruh%
+75,IMDB,,films,%(1)%Berlin%
+76,IMDB,,films,%auf%der%
+77,IMDB,,films,%:%
+78,IMDB,,films,%Ages:%
+79,IMDB,,plot,"This week, %"
+80,IMDB,,plot,All of the women are %
+81,IMDB,,plot,Inseparable friends %
+82,IMDB,,plot,To heed love's call %
+83,IMDB,,plot,Strange seems to be %
+84,IMDB,,plot,% relationship work.
+85,IMDB,,plot,% rejection?
+86,IMDB,,plot,% out of her comfort zone?
+87,IMDB,,plot,% ruin the brotherhood %
+88,IMDB,,plot,"% a gay stepmother""?"""
+89,IMDB,,plot,%YouTube celebrities%
+90,IMDB,,plot,%social%media%
+91,IMDB,,plot,%goes on her first date%
+92,IMDB,,plot,%comfort zone%
+93,IMDB,,plot,%successful relationship%
+94,IMDB,,plot,%love%and%relationship%
+95,IMDB,,plot,%struggling with%
+96,IMDB,,plot,%gay lover%
+97,IMDB,,plot,%fall for % instead
+98,IMDB,,plot,%friendship%develops%
+99,IMDB,,quotes,I don't know %
+100,IMDB,,quotes,What is % she %
+101,IMDB,,quotes,Inspector Gadget % alone.
+102,IMDB,,quotes,She records % videos %
+103,IMDB,,quotes,Dr. Claw: %
+104,IMDB,,quotes,% Michael J. Fox?
+105,IMDB,,quotes,% hustl-in'!
+106,IMDB,,quotes,% always on duty!
+107,IMDB,,quotes,% are you alright?
+108,IMDB,,quotes,% I put up with him?
+109,IMDB,,quotes,%Harvey%It's just%
+110,IMDB,,quotes,%I'm % and I'm in % school.
+111,IMDB,,quotes,"%Go, go gadget%"
+112,IMDB,,quotes,%M.A.D. Cat%
+113,IMDB,,quotes,"%worry, Chief. I'm always%"
+114,IMDB,,quotes,%fucking time lord%
+115,IMDB,,quotes,%you alright?%
+116,IMDB,,quotes,%suspicious situation%suspicious group%
+117,IMDB,,quotes,%useless fuzzball%
+118,IMDB,,quotes,%[repeated line]%
+119,PublicBI,,CityMaxCapita_1,http% instagram.com %
+120,PublicBI,,CityMaxCapita_1,% status % 600
+121,PublicBI,,CityMaxCapita_1,%instagram.com%p%
+122,PublicBI,,CityMaxCapita_1,%twitter.com%status%
+123,PublicBI,,CityMaxCapita_1,https% instagram.com %
+124,PublicBI,,CityMaxCapita_1,% p % taken
+125,PublicBI,,CityMaxCapita_1,%swarmapp.com%c%
+126,PublicBI,,CityMaxCapita_1,%bit.ly%1%
+127,PublicBI,,CityMaxCapita_1,http% bit.ly %
+128,PublicBI,,CityMaxCapita_1,% 2015 % story.html
+129,PublicBI,,CityMaxCapita_1,%youtube.com%watch%
+130,PublicBI,,CityMaxCapita_1,%huffingtonpost.com%2015%
+131,PublicBI,,CityMaxCapita_1,%nytimes.com%2015%
+132,PublicBI,,CityMaxCapita_1,%washingtonpost.com%2015%
+133,PublicBI,,CityMaxCapita_1,%facebook.com%status%
+134,PublicBI,,CityMaxCapita_1,%youtu.be%Jk%
+135,PublicBI,,CityMaxCapita_1,Senior % at %
+136,PublicBI,,CityMaxCapita_1,% IG% NATHANN
+137,PublicBI,,CityMaxCapita_1,%love%peace%
+138,PublicBI,,CityMaxCapita_1,%music%art%
+139,PublicBI,,CityMaxCapita_1,Student % at % University
+140,PublicBI,,CityMaxCapita_1,% im % kitty
+141,PublicBI,,CityMaxCapita_1,%founder%ceo%
+142,PublicBI,,CityMaxCapita_1,%born%raised%
+143,PublicBI,,CityMaxCapita_1,Live % life % it
+144,PublicBI,,CityMaxCapita_1,% akron % 2019
+145,PublicBI,,CityMaxCapita_1,%business%marketing%
+146,PublicBI,,CityMaxCapita_1,%social%justice%
+147,PublicBI,,CityMaxCapita_1,%university%graduate%
+148,PublicBI,,CityMaxCapita_1,%travel%photography%
+149,PublicBI,,CityMaxCapita_1,%food%wine%
+150,PublicBI,,CityMaxCapita_1,%digital%media%
+151,PublicBI,,CommonGovernment_1,J0% %0%
+152,PublicBI,,CommonGovernment_1,% % 1%KF
+153,PublicBI,,CommonGovernment_1,%A%1%
+154,PublicBI,,CommonGovernment_1,%B%5%
+155,PublicBI,,CommonGovernment_1,R4% %1%
+156,PublicBI,,CommonGovernment_1,% % 2%44
+157,PublicBI,,CommonGovernment_1,%C%1%
+158,PublicBI,,CommonGovernment_1,%D%3%
+159,PublicBI,,CommonGovernment_1,Z1% %N%
+160,PublicBI,,CommonGovernment_1,% % 0%30
+161,PublicBI,,CommonGovernment_1,%E%1%
+162,PublicBI,,CommonGovernment_1,%J%0%
+163,PublicBI,,CommonGovernment_1,%M%1%
+164,PublicBI,,CommonGovernment_1,%R%4%
+165,PublicBI,,CommonGovernment_1,%Y%1%
+166,PublicBI,,CommonGovernment_1,%Z%2%
+167,PublicBI,,CommonGovernment_1,DEPARTMENT % OF % HEALTH
+168,PublicBI,,CommonGovernment_1,% % INC.
+169,PublicBI,,CommonGovernment_1,%SERVICES%INC%
+170,PublicBI,,CommonGovernment_1,%TECHNOLOGIES%LLC%
+171,PublicBI,,CommonGovernment_1,UNIVERSITY % OF % MISSOURI
+172,PublicBI,,CommonGovernment_1,% % LLC
+173,PublicBI,,CommonGovernment_1,%SYSTEMS%CORPORATION%
+174,PublicBI,,CommonGovernment_1,%MANAGEMENT%SERVICES%
+175,PublicBI,,CommonGovernment_1,COUNTY % OF % SHELBY
+176,PublicBI,,CommonGovernment_1,% % CORPORATION
+177,PublicBI,,CommonGovernment_1,%CONSTRUCTION%INC%
+178,PublicBI,,CommonGovernment_1,%HEALTH%CARE%
+179,PublicBI,,CommonGovernment_1,%INTERNATIONAL%INC%
+180,PublicBI,,CommonGovernment_1,%COMMUNICATIONS%INC%
+181,PublicBI,,CommonGovernment_1,%GENERAL%DYNAMICS%
+182,PublicBI,,CommonGovernment_1,%LOCKHEED%MARTIN%
+183,PublicBI,,HashTags_1,RT %@% #%
+184,PublicBI,,HashTags_1,% #% #GreysAnatomy
+185,PublicBI,,HashTags_1,%#Scandal%#%
+186,PublicBI,,HashTags_1,%#GreysAnatomy%#%
+187,PublicBI,,HashTags_1,Watching #% tonight %
+188,PublicBI,,HashTags_1,% #% #Scandal
+189,PublicBI,,HashTags_1,%#SharkTank%#%
+190,PublicBI,,HashTags_1,%#Nashville%#%
+191,PublicBI,,HashTags_1,I am watching #% on % %
+192,PublicBI,,HashTags_1,% tonight % tonight
+193,PublicBI,,HashTags_1,%#ModernFamily%#%
+194,PublicBI,,HashTags_1,%#ABC%#%
+195,PublicBI,,HashTags_1,%#tvtag%http%
+196,PublicBI,,HashTags_1,%#ScandalThursday%#%
+197,PublicBI,,HashTags_1,%#OnceUponATime%#%
+198,PublicBI,,HashTags_1,%#Castle%#%
+199,PublicBI,,HashTags_1,New York% NY %
+200,PublicBI,,HashTags_1,% % Ohio
+201,PublicBI,,HashTags_1,%UT% % %
+202,PublicBI,,HashTags_1,"% % , % %"
+203,PublicBI,,HashTags_1,Chicago% IL %
+204,PublicBI,,HashTags_1,% % Texas
+205,PublicBI,,HashTags_1,% % - % %
+206,PublicBI,,HashTags_1,% % . % %
+207,PublicBI,,HashTags_1,Los Angeles% CA %
+208,PublicBI,,HashTags_1,% % California
+209,PublicBI,,HashTags_1,% Nashville % TN %
+210,PublicBI,,HashTags_1,% San % Francisco %
+211,PublicBI,,HashTags_1,% New % York %
+212,PublicBI,,HashTags_1,% Atlanta % GA %
+213,PublicBI,,HashTags_1,% % 757 %
+214,PublicBI,,HashTags_1,% % & % %

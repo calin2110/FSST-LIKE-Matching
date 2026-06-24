@@ -78,8 +78,7 @@ def get_dataframe(patterns_csv, time_csv):
                         'Pattern': pattern_type,
                         'Dataset': dataset,
                         'Approach': approach,
-                        'Throughput': float('nan') if pattern_type == 'substring' and approach == 'Interpreted' else (
-                                entry[approach] / 1e6)
+                        'Throughput': entry[approach] / 1e6
                     })
 
     return pd.DataFrame(rows)
