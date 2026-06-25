@@ -2,498 +2,498 @@
     "start": {
         "IMDB": {
             "avg_speedup": {
-                "Interpreted": "476%",
+                "Interpreted": "490%",
                 "Cpp": "717%",
-                "LLVM": "895%"
+                "LLVM": "857%"
             },
             "median_speedup": {
-                "Interpreted": "464%",
-                "Cpp": "738%",
-                "LLVM": "931%"
+                "Interpreted": "486%",
+                "Cpp": "760%",
+                "LLVM": "902%"
             },
             "min_speedup": {
-                "Interpreted": "344%",
-                "Cpp": "485%",
-                "LLVM": "590%"
+                "Interpreted": "350%",
+                "Cpp": "482%",
+                "LLVM": "570%"
             },
             "75th_quantile_speedup": {
-                "Interpreted": "400%",
-                "Cpp": "614%",
-                "LLVM": "801%"
+                "Interpreted": "413%",
+                "Cpp": "615%",
+                "LLVM": "731%"
             },
             "95th_quantile_speedup": {
-                "Interpreted": "348%",
-                "Cpp": "540%",
-                "LLVM": "610%"
+                "Interpreted": "354%",
+                "Cpp": "525%",
+                "LLVM": "603%"
             },
             "max_speedup": {
-                "Interpreted": "663%",
-                "Cpp": "986%",
-                "LLVM": "1060%"
+                "Interpreted": "678%",
+                "Cpp": "958%",
+                "LLVM": "1013%"
             },
             "median_tuples_per_compile": {
-                "Cpp": "34.66M",
-                "LLVM": "1.48M"
+                "Cpp": "35.73M",
+                "LLVM": "1.42M"
             },
             "median_tuples_per_create": {
-                "Cpp": 2637,
-                "LLVM": 3528,
-                "Interpreted": 1881
+                "Cpp": 2617,
+                "LLVM": 3360,
+                "Interpreted": 1930
             }
         },
         "PublicBI": {
             "avg_speedup": {
-                "Interpreted": "466%",
-                "Cpp": "585%",
-                "LLVM": "658%"
+                "Interpreted": "486%",
+                "Cpp": "576%",
+                "LLVM": "651%"
             },
             "median_speedup": {
-                "Interpreted": "481%",
-                "Cpp": "585%",
-                "LLVM": "666%"
+                "Interpreted": "482%",
+                "Cpp": "566%",
+                "LLVM": "665%"
             },
             "min_speedup": {
-                "Interpreted": "91%",
-                "Cpp": "262%",
-                "LLVM": "229%"
+                "Interpreted": "157%",
+                "Cpp": "260%",
+                "LLVM": "241%"
             },
             "75th_quantile_speedup": {
-                "Interpreted": "404%",
-                "Cpp": "504%",
-                "LLVM": "357%"
+                "Interpreted": "410%",
+                "Cpp": "496%",
+                "LLVM": "355%"
             },
             "95th_quantile_speedup": {
-                "Interpreted": "103%",
-                "Cpp": "262%",
-                "LLVM": "268%"
+                "Interpreted": "174%",
+                "Cpp": "264%",
+                "LLVM": "269%"
             },
             "max_speedup": {
-                "Interpreted": "783%",
-                "Cpp": "909%",
-                "LLVM": "1132%"
+                "Interpreted": "835%",
+                "Cpp": "878%",
+                "LLVM": "1115%"
             },
             "median_tuples_per_compile": {
-                "Cpp": "30.68M",
-                "LLVM": "2.82M"
+                "Cpp": "30.43M",
+                "LLVM": "2.89M"
             },
             "median_tuples_per_create": {
-                "Cpp": 12049,
-                "LLVM": 14383,
-                "Interpreted": 8954
+                "Cpp": 12372,
+                "LLVM": 14984,
+                "Interpreted": 9234
             }
         },
         "StackOverflow": {
             "avg_speedup": {
-                "Interpreted": "1144%",
-                "Cpp": "1226%",
-                "LLVM": "1356%"
+                "Interpreted": "1125%",
+                "Cpp": "1224%",
+                "LLVM": "1348%"
             },
             "median_speedup": {
-                "Interpreted": "1143%",
-                "Cpp": "1224%",
-                "LLVM": "1372%"
+                "Interpreted": "1205%",
+                "Cpp": "1214%",
+                "LLVM": "1370%"
             },
             "min_speedup": {
-                "Interpreted": "646%",
-                "Cpp": "808%",
-                "LLVM": "859%"
+                "Interpreted": "654%",
+                "Cpp": "804%",
+                "LLVM": "862%"
             },
             "75th_quantile_speedup": {
-                "Interpreted": "1117%",
-                "Cpp": "1040%",
-                "LLVM": "1282%"
+                "Interpreted": "888%",
+                "Cpp": "1052%",
+                "LLVM": "1270%"
             },
             "95th_quantile_speedup": {
-                "Interpreted": "740%",
-                "Cpp": "855%",
-                "LLVM": "943%"
+                "Interpreted": "701%",
+                "Cpp": "854%",
+                "LLVM": "944%"
             },
             "max_speedup": {
-                "Interpreted": "1572%",
+                "Interpreted": "1518%",
                 "Cpp": "1636%",
-                "LLVM": "1781%"
+                "LLVM": "1764%"
             },
             "median_tuples_per_compile": {
-                "Cpp": "7.46M",
-                "LLVM": "484.90K"
+                "Cpp": "7.55M",
+                "LLVM": "483.18K"
             },
             "median_tuples_per_create": {
-                "Cpp": 1906,
-                "LLVM": 2134,
-                "Interpreted": 2124
+                "Cpp": 1883,
+                "LLVM": 2110,
+                "Interpreted": 1749
             }
         },
         "TPCH": {
             "avg_speedup": {
-                "Interpreted": "510%",
-                "Cpp": "736%",
-                "LLVM": "844%"
+                "Interpreted": "523%",
+                "Cpp": "720%",
+                "LLVM": "810%"
             },
             "median_speedup": {
-                "Interpreted": "460%",
-                "Cpp": "696%",
-                "LLVM": "849%"
+                "Interpreted": "478%",
+                "Cpp": "679%",
+                "LLVM": "803%"
             },
             "min_speedup": {
-                "Interpreted": "357%",
-                "Cpp": "503%",
-                "LLVM": "601%"
+                "Interpreted": "364%",
+                "Cpp": "502%",
+                "LLVM": "571%"
             },
             "75th_quantile_speedup": {
-                "Interpreted": "424%",
-                "Cpp": "684%",
-                "LLVM": "719%"
+                "Interpreted": "436%",
+                "Cpp": "662%",
+                "LLVM": "684%"
             },
             "95th_quantile_speedup": {
-                "Interpreted": "372%",
-                "Cpp": "548%",
-                "LLVM": "621%"
+                "Interpreted": "379%",
+                "Cpp": "541%",
+                "LLVM": "590%"
             },
             "max_speedup": {
-                "Interpreted": "686%",
-                "Cpp": "1080%",
-                "LLVM": "1135%"
+                "Interpreted": "717%",
+                "Cpp": "1053%",
+                "LLVM": "1107%"
             },
             "median_tuples_per_compile": {
-                "Cpp": "39.69M",
-                "LLVM": "1.29M"
+                "Cpp": "38.87M",
+                "LLVM": "1.20M"
             },
             "median_tuples_per_create": {
-                "Cpp": 2783,
-                "LLVM": 3380,
-                "Interpreted": 1735
+                "Cpp": 2662,
+                "LLVM": 3037,
+                "Interpreted": 1745
             }
         }
     },
     "end": {
         "IMDB": {
             "avg_speedup": {
-                "Interpreted": "507%",
-                "Cpp": "633%",
-                "LLVM": "861%"
+                "Interpreted": "544%",
+                "Cpp": "631%",
+                "LLVM": "819%"
             },
             "median_speedup": {
-                "Interpreted": "497%",
-                "Cpp": "654%",
-                "LLVM": "905%"
+                "Interpreted": "536%",
+                "Cpp": "647%",
+                "LLVM": "828%"
             },
             "min_speedup": {
-                "Interpreted": "365%",
-                "Cpp": "461%",
-                "LLVM": "536%"
+                "Interpreted": "380%",
+                "Cpp": "441%",
+                "LLVM": "519%"
             },
             "75th_quantile_speedup": {
-                "Interpreted": "459%",
-                "Cpp": "550%",
-                "LLVM": "763%"
+                "Interpreted": "488%",
+                "Cpp": "546%",
+                "LLVM": "686%"
             },
             "95th_quantile_speedup": {
-                "Interpreted": "391%",
-                "Cpp": "479%",
-                "LLVM": "577%"
+                "Interpreted": "421%",
+                "Cpp": "459%",
+                "LLVM": "548%"
             },
             "max_speedup": {
-                "Interpreted": "703%",
-                "Cpp": "766%",
-                "LLVM": "1095%"
+                "Interpreted": "732%",
+                "Cpp": "755%",
+                "LLVM": "1052%"
             },
             "median_tuples_per_compile": {
-                "Cpp": "33.80M",
-                "LLVM": "2.29M"
+                "Cpp": "33.92M",
+                "LLVM": "2.17M"
             },
             "median_tuples_per_create": {
-                "Cpp": 7995,
-                "LLVM": 10877,
-                "Interpreted": 6192
+                "Cpp": 7910,
+                "LLVM": 10256,
+                "Interpreted": 6660
             }
         },
         "PublicBI": {
             "avg_speedup": {
-                "Interpreted": "556%",
-                "Cpp": "656%",
-                "LLVM": "815%"
+                "Interpreted": "573%",
+                "Cpp": "636%",
+                "LLVM": "791%"
             },
             "median_speedup": {
-                "Interpreted": "509%",
-                "Cpp": "605%",
-                "LLVM": "820%"
+                "Interpreted": "536%",
+                "Cpp": "582%",
+                "LLVM": "782%"
             },
             "min_speedup": {
                 "Interpreted": "353%",
-                "Cpp": "296%",
-                "LLVM": "366%"
+                "Cpp": "281%",
+                "LLVM": "361%"
             },
             "75th_quantile_speedup": {
-                "Interpreted": "449%",
-                "Cpp": "534%",
-                "LLVM": "666%"
+                "Interpreted": "429%",
+                "Cpp": "507%",
+                "LLVM": "638%"
             },
             "95th_quantile_speedup": {
                 "Interpreted": "371%",
-                "Cpp": "347%",
+                "Cpp": "340%",
                 "LLVM": "440%"
             },
             "max_speedup": {
-                "Interpreted": "803%",
-                "Cpp": "1166%",
-                "LLVM": "1256%"
+                "Interpreted": "823%",
+                "Cpp": "1145%",
+                "LLVM": "1190%"
             },
             "median_tuples_per_compile": {
-                "Cpp": "33.12M",
-                "LLVM": "3.99M"
+                "Cpp": "32.98M",
+                "LLVM": "3.93M"
             },
             "median_tuples_per_create": {
-                "Cpp": 12934,
-                "LLVM": 17056,
-                "Interpreted": 9627
+                "Cpp": 12378,
+                "LLVM": 17118,
+                "Interpreted": 10730
             }
         },
         "StackOverflow": {
             "avg_speedup": {
-                "Interpreted": "1047%",
-                "Cpp": "861%",
-                "LLVM": "1041%"
+                "Interpreted": "1030%",
+                "Cpp": "857%",
+                "LLVM": "1035%"
             },
             "median_speedup": {
-                "Interpreted": "1305%",
-                "Cpp": "917%",
-                "LLVM": "1261%"
+                "Interpreted": "1219%",
+                "Cpp": "905%",
+                "LLVM": "1243%"
             },
             "min_speedup": {
-                "Interpreted": "119%",
-                "Cpp": "358%",
-                "LLVM": "381%"
+                "Interpreted": "204%",
+                "Cpp": "352%",
+                "LLVM": "378%"
             },
             "75th_quantile_speedup": {
-                "Interpreted": "646%",
-                "Cpp": "808%",
-                "LLVM": "859%"
+                "Interpreted": "654%",
+                "Cpp": "804%",
+                "LLVM": "862%"
             },
             "95th_quantile_speedup": {
-                "Interpreted": "224%",
-                "Cpp": "448%",
-                "LLVM": "476%"
+                "Interpreted": "294%",
+                "Cpp": "443%",
+                "LLVM": "475%"
             },
             "max_speedup": {
-                "Interpreted": "1591%",
-                "Cpp": "1180%",
-                "LLVM": "1372%"
+                "Interpreted": "1555%",
+                "Cpp": "1173%",
+                "LLVM": "1370%"
             },
             "median_tuples_per_compile": {
-                "Cpp": "7.46M",
-                "LLVM": "888.49K"
+                "Cpp": "7.55M",
+                "LLVM": "895.04K"
             },
             "median_tuples_per_create": {
-                "Cpp": 3266,
-                "LLVM": 3679,
-                "Interpreted": 4182
+                "Cpp": 3204,
+                "LLVM": 3594,
+                "Interpreted": 4076
             }
         },
         "TPCH": {
             "avg_speedup": {
-                "Interpreted": "528%",
-                "Cpp": "465%",
-                "LLVM": "553%"
+                "Interpreted": "537%",
+                "Cpp": "451%",
+                "LLVM": "531%"
             },
             "median_speedup": {
-                "Interpreted": "467%",
-                "Cpp": "470%",
-                "LLVM": "541%"
+                "Interpreted": "461%",
+                "Cpp": "454%",
+                "LLVM": "527%"
             },
             "min_speedup": {
                 "Interpreted": "422%",
-                "Cpp": "415%",
-                "LLVM": "531%"
+                "Cpp": "408%",
+                "LLVM": "494%"
             },
             "75th_quantile_speedup": {
-                "Interpreted": "445%",
-                "Cpp": "442%",
-                "LLVM": "536%"
+                "Interpreted": "441%",
+                "Cpp": "431%",
+                "LLVM": "511%"
             },
             "95th_quantile_speedup": {
                 "Interpreted": "426%",
-                "Cpp": "421%",
-                "LLVM": "532%"
+                "Cpp": "413%",
+                "LLVM": "497%"
             },
             "max_speedup": {
-                "Interpreted": "695%",
-                "Cpp": "510%",
-                "LLVM": "587%"
+                "Interpreted": "729%",
+                "Cpp": "492%",
+                "LLVM": "572%"
             },
             "median_tuples_per_compile": {
-                "Cpp": "24.86M",
-                "LLVM": "1.05M"
+                "Cpp": "24.37M",
+                "LLVM": "1.02M"
             },
             "median_tuples_per_create": {
-                "Cpp": 5535,
-                "LLVM": 7084,
-                "Interpreted": 5637
+                "Cpp": 5368,
+                "LLVM": 6488,
+                "Interpreted": 5561
             }
         }
     },
     "middle": {
         "IMDB": {
             "avg_speedup": {
-                "Interpreted": "169%",
-                "Cpp": "272%",
-                "LLVM": "299%"
+                "Interpreted": "242%",
+                "Cpp": "270%",
+                "LLVM": "298%"
             },
             "median_speedup": {
-                "Interpreted": "169%",
-                "Cpp": "263%",
-                "LLVM": "288%"
+                "Interpreted": "245%",
+                "Cpp": "260%",
+                "LLVM": "287%"
             },
             "min_speedup": {
-                "Interpreted": "87%",
-                "Cpp": "124%",
-                "LLVM": "128%"
+                "Interpreted": "137%",
+                "Cpp": "125%",
+                "LLVM": "129%"
             },
             "75th_quantile_speedup": {
-                "Interpreted": "132%",
+                "Interpreted": "211%",
                 "Cpp": "244%",
-                "LLVM": "270%"
+                "LLVM": "271%"
             },
             "95th_quantile_speedup": {
-                "Interpreted": "95%",
-                "Cpp": "180%",
-                "LLVM": "197%"
+                "Interpreted": "158%",
+                "Cpp": "182%",
+                "LLVM": "199%"
             },
             "max_speedup": {
-                "Interpreted": "376%",
-                "Cpp": "504%",
-                "LLVM": "522%"
+                "Interpreted": "428%",
+                "Cpp": "497%",
+                "LLVM": "498%"
             },
             "median_tuples_per_compile": {
-                "Cpp": "12.08M",
-                "LLVM": "999.69K"
+                "Cpp": "12.02M",
+                "LLVM": "1.01M"
             },
             "median_tuples_per_create": {
-                "Cpp": 3889,
-                "LLVM": 4307,
-                "Interpreted": 2323
+                "Cpp": 3683,
+                "LLVM": 4171,
+                "Interpreted": 3559
             }
         },
         "PublicBI": {
             "avg_speedup": {
-                "Interpreted": "171%",
-                "Cpp": "224%",
-                "LLVM": "261%"
-            },
-            "median_speedup": {
-                "Interpreted": "139%",
-                "Cpp": "226%",
+                "Interpreted": "216%",
+                "Cpp": "221%",
                 "LLVM": "260%"
             },
+            "median_speedup": {
+                "Interpreted": "186%",
+                "Cpp": "223%",
+                "LLVM": "252%"
+            },
             "min_speedup": {
-                "Interpreted": "83%",
-                "Cpp": "126%",
-                "LLVM": "149%"
+                "Interpreted": "135%",
+                "Cpp": "123%",
+                "LLVM": "142%"
             },
             "75th_quantile_speedup": {
-                "Interpreted": "109%",
-                "Cpp": "191%",
-                "LLVM": "214%"
+                "Interpreted": "168%",
+                "Cpp": "188%",
+                "LLVM": "208%"
             },
             "95th_quantile_speedup": {
-                "Interpreted": "91%",
+                "Interpreted": "140%",
                 "Cpp": "153%",
-                "LLVM": "171%"
+                "LLVM": "167%"
             },
             "max_speedup": {
-                "Interpreted": "360%",
-                "Cpp": "316%",
-                "LLVM": "384%"
+                "Interpreted": "384%",
+                "Cpp": "311%",
+                "LLVM": "403%"
             },
             "median_tuples_per_compile": {
-                "Cpp": "9.22M",
-                "LLVM": "982.21K"
+                "Cpp": "9.37M",
+                "LLVM": "963.79K"
             },
             "median_tuples_per_create": {
-                "Cpp": 4171,
-                "LLVM": 4719,
-                "Interpreted": 3211
+                "Cpp": 4050,
+                "LLVM": 4679,
+                "Interpreted": 3927
             }
         },
         "StackOverflow": {
             "avg_speedup": {
-                "Interpreted": "59%",
-                "Cpp": "277%",
-                "LLVM": "301%"
+                "Interpreted": "110%",
+                "Cpp": "274%",
+                "LLVM": "297%"
             },
             "median_speedup": {
-                "Interpreted": "50%",
-                "Cpp": "276%",
-                "LLVM": "291%"
+                "Interpreted": "99%",
+                "Cpp": "273%",
+                "LLVM": "288%"
             },
             "min_speedup": {
-                "Interpreted": "48%",
-                "Cpp": "163%",
-                "LLVM": "180%"
+                "Interpreted": "89%",
+                "Cpp": "162%",
+                "LLVM": "178%"
             },
             "75th_quantile_speedup": {
-                "Interpreted": "49%",
-                "Cpp": "233%",
-                "LLVM": "254%"
+                "Interpreted": "96%",
+                "Cpp": "230%",
+                "LLVM": "251%"
             },
             "95th_quantile_speedup": {
-                "Interpreted": "48%",
-                "Cpp": "179%",
-                "LLVM": "199%"
+                "Interpreted": "91%",
+                "Cpp": "178%",
+                "LLVM": "197%"
             },
             "max_speedup": {
-                "Interpreted": "76%",
-                "Cpp": "450%",
-                "LLVM": "493%"
+                "Interpreted": "145%",
+                "Cpp": "444%",
+                "LLVM": "484%"
             },
             "median_tuples_per_compile": {
-                "Cpp": "2.34M",
-                "LLVM": "251.40K"
+                "Cpp": "2.35M",
+                "LLVM": "248.00K"
             },
             "median_tuples_per_create": {
-                "Cpp": 1080,
-                "LLVM": 1192,
-                "Interpreted": 181
+                "Cpp": 1076,
+                "LLVM": 1182,
+                "Interpreted": 346
             }
         },
         "TPCH": {
             "avg_speedup": {
-                "Interpreted": "186%",
-                "Cpp": "243%",
-                "LLVM": "267%"
+                "Interpreted": "246%",
+                "Cpp": "242%",
+                "LLVM": "266%"
             },
             "median_speedup": {
-                "Interpreted": "152%",
-                "Cpp": "230%",
-                "LLVM": "258%"
+                "Interpreted": "221%",
+                "Cpp": "225%",
+                "LLVM": "252%"
             },
             "min_speedup": {
-                "Interpreted": "132%",
+                "Interpreted": "173%",
                 "Cpp": "155%",
-                "LLVM": "170%"
+                "LLVM": "165%"
             },
             "75th_quantile_speedup": {
-                "Interpreted": "145%",
-                "Cpp": "206%",
-                "LLVM": "217%"
+                "Interpreted": "213%",
+                "Cpp": "205%",
+                "LLVM": "213%"
             },
             "95th_quantile_speedup": {
-                "Interpreted": "137%",
+                "Interpreted": "176%",
                 "Cpp": "162%",
-                "LLVM": "175%"
+                "LLVM": "171%"
             },
             "max_speedup": {
-                "Interpreted": "340%",
-                "Cpp": "387%",
-                "LLVM": "440%"
+                "Interpreted": "389%",
+                "Cpp": "390%",
+                "LLVM": "451%"
             },
             "median_tuples_per_compile": {
-                "Cpp": "11.87M",
-                "LLVM": "922.43K"
+                "Cpp": "11.71M",
+                "LLVM": "911.77K"
             },
             "median_tuples_per_create": {
-                "Cpp": 3024,
-                "LLVM": 3345,
-                "Interpreted": 2332
+                "Cpp": 2864,
+                "LLVM": 3188,
+                "Interpreted": 2949
             }
         }
     }
