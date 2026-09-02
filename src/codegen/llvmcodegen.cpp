@@ -272,7 +272,9 @@ void automata::codegen::llvmir::LLVMCompiler::generateBackwards(const std::optio
     llvm::Value* lvlVal = builder.CreateLoad(i64Ty, lvlPtr, fmt::format("{}.level", type));
     llvm::Value* constAdd = llvm::ConstantInt::get(i64Ty, 1);
     llvm::Value* currentSum = builder.CreateAdd(strIdxVal, constAdd, fmt::format("{}.summed", type));
-    llvm::Value* cond = builder.CreateICmpSGE(currentSum, lvlVal, fmt::format("{}.cmp", type));
+    llvm::Value* inRow = builder.CreateICmpSGE(strIdxVal, llvm::ConstantInt::get(i64Ty, 0), fmt::format("{}.inRow", type));
+    llvm::Value* levelOk = builder.CreateICmpSGE(currentSum, lvlVal, fmt::format("{}.levelOk", type));
+    llvm::Value* cond = builder.CreateAnd(inRow, levelOk, fmt::format("{}.cmp", type));
     builder.CreateCondBr(cond, loopBodyBB, loopEndBB);
 
     builder.SetInsertPoint(loopBodyBB);

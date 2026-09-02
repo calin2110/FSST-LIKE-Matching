@@ -99,7 +99,7 @@ namespace automata::parsing {
                         return false;
                     *strIdx = len - fix.size() - 1;
                 }
-                while (currentState < error && (Forwards ? *strIdx + levels[currentState] <= len :*strIdx + 1 >= levels[currentState])) {
+                while (currentState < error && (Forwards ? *strIdx + levels[currentState] <= len : *strIdx >= 0 && *strIdx + 1 >= levels[currentState])) {
                     if (Forwards) {
                         if (currentState < N) {
                             size_t level = levels[currentState];

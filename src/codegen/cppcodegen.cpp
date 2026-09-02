@@ -170,7 +170,7 @@ void automata::codegen::cpp::CppCompiler::generateBackwards(const std::optional<
     generateSuffixCheck(params->deterministicPath.data() + params->deterministicPath.size(), params->deterministicPath.size(), 0);
     ss << fmt::format("\tauto q = {};\n", getEnumStateName(params->start, direction));
     ss << fmt::format("\tuint64_t level = {};\n", params->start->level);
-    std::string condition = "*strIdx + 1 >= level";
+    std::string condition = "*strIdx >= 0 && *strIdx + 1 >= level";
     ss << fmt::format("\twhile ({}) {{\n", condition);
     ss << fmt::format("\t\tswitch(q) {{\n");
 
