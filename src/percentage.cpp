@@ -192,9 +192,23 @@ std::vector<automata::State*> automata::percentage::initialisePseudoEnds(FiniteA
     for (uint8_t i = 0; i < 8; ++i) {
         pseudoEnds[i] = automaton->createState();
         pseudoEnds[i]->defaultTransition = precomputedEnds[i];
-        pseudoEnds[i]->transitions[FSST_ESC] = automaton->errorState;
         pseudoEnds[i]->level = 0;
         pseudoEnds[i]->endIdx = i;
+
+        // The byte before the match's first code decides whether that byte is
+        // a code or the escaped literal of an escape pair. A single 255 does
+        // not settle it: it is the escape marker, unless it is itself the
+        // escaped 255 literal of the pair before it. Every non-255 byte ends a
+        // token, so only the parity of the run of 255 bytes in front of the
+        // code matters: an even run leaves the code unescaped (match), an odd
+        // run escapes it (no match). The check therefore alternates between
+        // the pseudo-end (even) and this state (odd), and stopping at the row
+        // start in either state gives the answer for that parity.
+        State* oddEscapes = automaton->createState();
+        oddEscapes->defaultTransition = automaton->errorState;
+        oddEscapes->level = 0;
+        oddEscapes->transitions[FSST_ESC] = pseudoEnds[i];
+        pseudoEnds[i]->transitions[FSST_ESC] = oddEscapes;
     }
     return pseudoEnds;
 }

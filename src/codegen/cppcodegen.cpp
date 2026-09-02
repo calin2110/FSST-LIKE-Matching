@@ -30,6 +30,14 @@ void automata::codegen::cpp::CppCompiler::addIncludes() {
     ss << "#include <cstdint>\n";
     ss << "#include <bit>\n";
     ss << "#include <string_view>\n";
+    // Whether byte `i` is the literal of an escape pair: every non-255 byte ends a
+    // token, so only the parity of the run of 255 bytes in front of `i` decides it.
+    ss << "static inline bool isEscapedLiteral(const uint8_t* compressed, size_t i) {\n";
+    ss << "\tsize_t runStart = i;\n";
+    ss << "\twhile (runStart > 0 && compressed[runStart - 1] == 255)\n";
+    ss << "\t\t--runStart;\n";
+    ss << "\treturn ((i - runStart) & 1) != 0;\n";
+    ss << "}\n";
     if (enableSIMD) {
         ss << "#include <nmmintrin.h>\n";
         ss << "#include <pmmintrin.h>\n";
@@ -384,8 +392,8 @@ void automata::codegen::cpp::CppStateCodegen::generateMiddleStart(const State *s
 
     ss << "\t\t\t{\n";
     ss << "\t\t\t\tint64_t maxIdx = len - level;\n";
-    ss << "\t\t\t\tuint8_t prevByte;\n";
     ss << "\t\t\t\tint64_t currentStrIdx = *strIdx;\n";
+    ss << "\t\t\t\tbool escaped;\n";  // declared up here: the SIMD path jumps past this point
     // case I: no SIMD allowed
     auto parsingType = StateCodegen::doesParsingUseSIMD(state, enableSIMD);
     if (parsingType != ParsingMode::NO_SIMD) {
@@ -417,7 +425,7 @@ void automata::codegen::cpp::CppStateCodegen::generateMiddleStart(const State *s
         ss << "\t\t\t\t\twhile (mask != 0) {\n";
         ss << "\t\t\t\t\t\tint index = std::countr_zero(mask);\n";
         ss << "\t\t\t\t\t\tsize_t currentIndex = currentStrIdx + index;\n";
-        ss << "\t\t\t\t\t\tif (currentIndex == 0 || compressed[currentIndex - 1] != 255) {\n";
+        ss << "\t\t\t\t\t\tif (!isEscapedLiteral(compressed, currentIndex)) {\n";
         ss << "\t\t\t\t\t\t\tcurrentStrIdx = currentIndex;\n";
         ss << fmt::format("\t\t\t\t\t\t\tgoto {};\n", CppCompiler::getLabel(state));
         ss << "\t\t\t\t\t\t}\n";
@@ -427,14 +435,12 @@ void automata::codegen::cpp::CppStateCodegen::generateMiddleStart(const State *s
         ss << "\t\t\t\t}\n";
     }
 
-    ss << "\t\t\t\tif (currentStrIdx > 0) {\n";
-    ss << "\t\t\t\t\tprevByte = compressed[currentStrIdx - 1];\n";
-    ss << "\t\t\t\t} else {\n";
-    ss << "\t\t\t\t\tprevByte = 0;\n";
-    ss << "\t\t\t\t}\n";
-    ss << fmt::format("\t\t\t\twhile (currentStrIdx <= maxIdx && (!{}[compressed[currentStrIdx]] || prevByte == 255)) {{\n", CppCompiler::getTransitionArrayName(state));
-    ss << fmt::format("\t\t\t\t\tprevByte = compressed[currentStrIdx];\n");
-    ss << fmt::format("\t\t\t\t\t++currentStrIdx;\n");
+    // The SIMD loop above advances 16 bytes at a time without tracking escape
+    // pairs, so recover from the byte stream whether we stand on a literal.
+    ss << "\t\t\t\tescaped = isEscapedLiteral(compressed, currentStrIdx);\n";
+    ss << fmt::format("\t\t\t\twhile (currentStrIdx <= maxIdx && (escaped || !{}[compressed[currentStrIdx]])) {{\n", CppCompiler::getTransitionArrayName(state));
+    ss << "\t\t\t\t\tescaped = !escaped && compressed[currentStrIdx] == 255;\n";
+    ss << "\t\t\t\t\t++currentStrIdx;\n";
     ss << "\t\t\t\t}\n";
 
     ss << fmt::format("\t\t\t\tif (currentStrIdx > maxIdx)\n");
