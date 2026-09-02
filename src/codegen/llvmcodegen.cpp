@@ -272,7 +272,9 @@ void automata::codegen::llvmir::LLVMCompiler::generateBackwards(const std::optio
     llvm::Value* lvlVal = builder.CreateLoad(i64Ty, lvlPtr, fmt::format("{}.level", type));
     llvm::Value* constAdd = llvm::ConstantInt::get(i64Ty, 1);
     llvm::Value* currentSum = builder.CreateAdd(strIdxVal, constAdd, fmt::format("{}.summed", type));
-    llvm::Value* cond = builder.CreateICmpSGE(currentSum, lvlVal, fmt::format("{}.cmp", type));
+    llvm::Value* inRow = builder.CreateICmpSGE(strIdxVal, llvm::ConstantInt::get(i64Ty, 0), fmt::format("{}.inRow", type));
+    llvm::Value* levelOk = builder.CreateICmpSGE(currentSum, lvlVal, fmt::format("{}.levelOk", type));
+    llvm::Value* cond = builder.CreateAnd(inRow, levelOk, fmt::format("{}.cmp", type));
     builder.CreateCondBr(cond, loopBodyBB, loopEndBB);
 
     builder.SetInsertPoint(loopBodyBB);
@@ -897,9 +899,57 @@ void automata::codegen::llvmir::LLVMStateCodegen::generateEnd(const State *state
 
 }
 
+
+namespace {
+    // Whether byte `i` of `data` is the literal of an escape pair. Every non-255
+    // byte ends a token, so only the parity of the run of 255 bytes in front of
+    // `i` decides it: an even run leaves `i` a code (or a marker), an odd run
+    // makes it the escaped literal. Emitted once per module, on first use.
+    llvm::Function* getOrCreateIsEscapedLiteral(llvm::Module& module, llvm::IRBuilder<>& builder, llvm::Type* dataPtrTy) {
+        if (llvm::Function* existing = module.getFunction("isEscapedLiteral")) {
+            return existing;
+        }
+        llvm::LLVMContext& ctx = module.getContext();
+        llvm::Type* i64Ty = llvm::Type::getInt64Ty(ctx);
+        llvm::Type* i8Ty = llvm::Type::getInt8Ty(ctx);
+        llvm::FunctionType* fnTy = llvm::FunctionType::get(llvm::Type::getInt1Ty(ctx), {dataPtrTy, i64Ty}, false);
+        llvm::Function* fn = llvm::Function::Create(fnTy, llvm::Function::InternalLinkage, "isEscapedLiteral", module);
+        llvm::Value* data = fn->getArg(0);
+        llvm::Value* idx = fn->getArg(1);
+        llvm::BasicBlock* entryBB = llvm::BasicBlock::Create(ctx, "entry", fn);
+        llvm::BasicBlock* condBB = llvm::BasicBlock::Create(ctx, "run.cond", fn);
+        llvm::BasicBlock* checkBB = llvm::BasicBlock::Create(ctx, "run.check", fn);
+        llvm::BasicBlock* doneBB = llvm::BasicBlock::Create(ctx, "run.done", fn);
+
+        llvm::IRBuilderBase::InsertPointGuard guard(builder);
+        builder.SetInsertPoint(entryBB);
+        builder.CreateBr(condBB);
+
+        builder.SetInsertPoint(condBB);
+        llvm::PHINode* runStart = builder.CreatePHI(i64Ty, 2, "runStart");
+        runStart->addIncoming(idx, entryBB);
+        llvm::Value* hasPrevious = builder.CreateICmpSGT(runStart, llvm::ConstantInt::get(i64Ty, 0), "hasPrevious");
+        builder.CreateCondBr(hasPrevious, checkBB, doneBB);
+
+        builder.SetInsertPoint(checkBB);
+        llvm::Value* previousIndex = builder.CreateSub(runStart, llvm::ConstantInt::get(i64Ty, 1), "previousIndex");
+        llvm::Value* previousBytePtr = builder.CreateInBoundsGEP(i8Ty, data, previousIndex, "previousBytePtr");
+        llvm::Value* previousByteVal = builder.CreateLoad(i8Ty, previousBytePtr, "previousByteVal");
+        llvm::Value* isEscapeByte = builder.CreateICmpEQ(previousByteVal, llvm::ConstantInt::get(i8Ty, 255), "isEscapeByte");
+        runStart->addIncoming(previousIndex, checkBB);
+        builder.CreateCondBr(isEscapeByte, condBB, doneBB);
+
+        builder.SetInsertPoint(doneBB);
+        llvm::Value* runLength = builder.CreateSub(idx, runStart, "runLength");
+        llvm::Value* runParity = builder.CreateAnd(runLength, llvm::ConstantInt::get(i64Ty, 1), "runParity");
+        builder.CreateRet(builder.CreateICmpNE(runParity, llvm::ConstantInt::get(i64Ty, 0), "isEscapedLiteral"));
+        return fn;
+    }
+}
 void automata::codegen::llvmir::LLVMStateCodegen::generateMiddleStart(const State *state, const State *error, int direction) {
     builder.SetInsertPoint(stateToSwitchBlock[state]);
     std::string llvmName = LLVMCompiler::getEnumStateName(state, direction);
+    llvm::Function* isEscapedLiteralFn = getOrCreateIsEscapedLiteral(*module, builder, dataArg->getType());
     for (const auto& [symbol, next]: state->transitions) {
         if (symbol == 255 && next->transitions.empty()) {
             continue;
@@ -1005,19 +1055,10 @@ void automata::codegen::llvmir::LLVMStateCodegen::generateMiddleStart(const Stat
         llvm::Value* i64MatchIndex = builder.CreateZExt(i16MatchIndex, builder.getInt64Ty(), fmt::format("{}.i64matchIndex", llvmName));
         strIdxVal = builder.CreateLoad(i64Ty, strIdxArg, fmt::format("{}.strIdxVal", llvmName));
         llvm::Value* currentIndex = builder.CreateAdd(strIdxVal, i64MatchIndex, fmt::format("{}.currentIndex", llvmName));
-        llvm::Value* hasPrevious = builder.CreateICmpNE(currentIndex, llvm::ConstantInt::get(i64Ty, 0), fmt::format("{}.hasPrevious", llvmName));
-
-        llvm::BasicBlock* continueCheckBB = llvm::BasicBlock::Create(*threadSafeContext.getContext(), fmt::format("{}.continueCheck", llvmName), func);
         llvm::BasicBlock* updateMaskBB = llvm::BasicBlock::Create(*threadSafeContext.getContext(), fmt::format("{}.updateMask", llvmName), func);
         llvm::BasicBlock* simdSuccessBB = llvm::BasicBlock::Create(*threadSafeContext.getContext(), fmt::format("{}.simdSuccess", llvmName), func);
 
-        builder.CreateCondBr(hasPrevious, continueCheckBB, simdSuccessBB);
-
-        builder.SetInsertPoint(continueCheckBB);
-        llvm::Value* previousIndex = builder.CreateSub(currentIndex, llvm::ConstantInt::get(i64Ty, 1), fmt::format("{}.previousIndex", llvmName));
-        llvm::Value* previousBytePtr = builder.CreateInBoundsGEP(builder.getInt8Ty(), dataArg, previousIndex, fmt::format("{}.previousBytePtr", llvmName));
-        llvm::Value* previousByteVal = builder.CreateLoad(builder.getInt8Ty(), previousBytePtr, fmt::format("{}.previousByteVal", llvmName));
-        llvm::Value* isEscaped = builder.CreateICmpEQ(previousByteVal, llvm::ConstantInt::get(i8Ty, 255), fmt::format("{}.isEscaped", llvmName));
+        llvm::Value* isEscaped = builder.CreateCall(isEscapedLiteralFn, {dataArg, currentIndex}, fmt::format("{}.isEscaped", llvmName));
         builder.CreateCondBr(isEscaped, updateMaskBB, simdSuccessBB);
 
         builder.SetInsertPoint(updateMaskBB);
@@ -1040,66 +1081,52 @@ void automata::codegen::llvmir::LLVMStateCodegen::generateMiddleStart(const Stat
         builder.SetInsertPoint(afterSimdCheckBB);
     }
 
-    llvm::Value* constZero = llvm::ConstantInt::get(i64Ty, 0);
-    strIdxVal = builder.CreateLoad(i64Ty, strIdxArg, fmt::format("{}.strIdxVal", llvmName));
-    llvm::Value* hasPrevious = builder.CreateICmpNE(strIdxVal, constZero, fmt::format("{}.hasPrevious", llvmName));
-    llvm::BasicBlock* storePreviousValueBB = llvm::BasicBlock::Create(*threadSafeContext.getContext(), fmt::format("{}.storePreviousValue", llvmName), func);
-    llvm::BasicBlock* storeZeroBB = llvm::BasicBlock::Create(*threadSafeContext.getContext(), fmt::format("{}.storeZero", llvmName), func);
+    // The SIMD loop above advances 16 bytes at a time without tracking escape
+    // pairs, so recover from the byte stream whether we stand on a literal;
+    // `prevBytePtr` then carries that flag (0 or 1) through the scalar loop.
     llvm::BasicBlock* loopCond1BB = llvm::BasicBlock::Create(*threadSafeContext.getContext(), fmt::format("{}.loop.cond1", llvmName), func);
-
-    builder.CreateCondBr(hasPrevious, storePreviousValueBB, storeZeroBB);
-    builder.SetInsertPoint(storePreviousValueBB);
-
-    builder.SetInsertPoint(storeZeroBB);
-    llvm::Value* storedZero = llvm::ConstantInt::get(i8Ty, 0);
-    builder.CreateStore( storedZero, prevBytePtr);
-    builder.CreateBr(loopCond1BB);
-
-    builder.SetInsertPoint(storePreviousValueBB);
-    llvm::Value* constOne = llvm::ConstantInt::get(i64Ty, 1);
-    strIdxVal = builder.CreateLoad(i64Ty, strIdxArg, fmt::format("{}.strIdxVal", llvmName));
-    llvm::Value* previousIndex = builder.CreateSub(strIdxVal, constOne, fmt::format("{}.previousIndex", llvmName));
-    llvm::Value *previousBytePtr = builder.CreateInBoundsGEP(builder.getInt8Ty(), dataArg, previousIndex, fmt::format("{}.previousBytePtr", llvmName));
-    llvm::Value *previousByteVal = builder.CreateLoad(builder.getInt8Ty(), previousBytePtr, fmt::format("{}.previousByteVal", llvmName));
-    builder.CreateStore(previousByteVal, prevBytePtr);
-    builder.CreateBr(loopCond1BB);
     llvm::BasicBlock* loopCond2BB = llvm::BasicBlock::Create(*threadSafeContext.getContext(), fmt::format("{}.loop.cond2", llvmName), func);
     llvm::BasicBlock* loopCond3BB = llvm::BasicBlock::Create(*threadSafeContext.getContext(), fmt::format("{}.loop.cond3", llvmName), func);
-
     llvm::BasicBlock* loopBodyBB = llvm::BasicBlock::Create(*threadSafeContext.getContext(), fmt::format("{}.loop.body", llvmName), func);
     llvm::BasicBlock* loopEndBB  = llvm::BasicBlock::Create(*threadSafeContext.getContext(), fmt::format("{}.loop.end", llvmName), func);
 
-    builder.SetInsertPoint(loopCond1BB);
+    strIdxVal = builder.CreateLoad(i64Ty, strIdxArg, fmt::format("{}.strIdxVal", llvmName));
+    llvm::Value* escapedAtEntry = builder.CreateCall(isEscapedLiteralFn, {dataArg, strIdxVal}, fmt::format("{}.escapedAtEntry", llvmName));
+    builder.CreateStore(builder.CreateZExt(escapedAtEntry, i8Ty), prevBytePtr);
+    builder.CreateBr(loopCond1BB);
 
+    builder.SetInsertPoint(loopCond1BB);
     strIdxVal = builder.CreateLoad(i64Ty, strIdxArg, fmt::format("{}.strIdxVal", llvmName));
     llvm::Value* condValue1 = builder.CreateICmpSLE(strIdxVal, maxIdxVal, fmt::format("{}.loop.condValue1", llvmName));
     llvm::Value *currentBytePtr = builder.CreateInBoundsGEP(builder.getInt8Ty(), dataArg, strIdxVal, fmt::format("{}.currentBytePtr", llvmName));
     llvm::Value *currentByteVal = builder.CreateLoad(builder.getInt8Ty(), currentBytePtr, fmt::format("{}.currentByteVal", llvmName));
     builder.CreateCondBr(condValue1, loopCond2BB, loopEndBB);
 
+    // standing on an escaped literal: skip it whatever its value
     builder.SetInsertPoint(loopCond2BB);
-    llvm::GlobalVariable* transitionArray = module->getGlobalVariable(LLVMCompiler::getTransitionArrayName(state), true);
+    llvm::Value* escapedVal = builder.CreateLoad(builder.getInt8Ty(), prevBytePtr, fmt::format("{}.escapedVal", llvmName));
+    llvm::Value* isEscaped = builder.CreateICmpNE(escapedVal, builder.getInt8(0), fmt::format("{}.isEscaped", llvmName));
+    builder.CreateCondBr(isEscaped, loopBodyBB, loopCond3BB);
 
+    // a code: stop on the first one with a transition
+    builder.SetInsertPoint(loopCond3BB);
+    llvm::GlobalVariable* transitionArray = module->getGlobalVariable(LLVMCompiler::getTransitionArrayName(state), true);
     llvm::Value *currentByteValUnsigned = builder.CreateZExt(currentByteVal, builder.getInt16Ty(), fmt::format("{}.currentByteValUnsigned", llvmName));
     std::vector<llvm::Value*> indices = { builder.getInt32(0), currentByteValUnsigned };
     llvm::ArrayType* arrayTy = llvm::ArrayType::get(builder.getInt8Ty(), 256);
     llvm::Value* ptrToBool = builder.CreateInBoundsGEP(arrayTy, transitionArray, indices, fmt::format("{}.condValue2Ptr", llvmName));
     llvm::Value* rawBoolVal = builder.CreateLoad(builder.getInt8Ty(), ptrToBool);
     llvm::Value* condValue2 = builder.CreateICmpNE(rawBoolVal, builder.getInt8(0), fmt::format("{}.condValue2", llvmName));
-    builder.CreateCondBr(condValue2, loopCond3BB, loopBodyBB);
+    builder.CreateCondBr(condValue2, loopEndBB, loopBodyBB);
 
-    builder.SetInsertPoint(loopCond3BB);
-
-    llvm::Value* prevByteVal = builder.CreateLoad(builder.getInt8Ty(), prevBytePtr, fmt::format("{}.prevByteVal", llvmName));
-    llvm::Value* escapeByte = builder.getInt8(255);
-    llvm::Value* condValue3 = builder.CreateICmpEQ(prevByteVal, escapeByte);
-    builder.CreateCondBr(condValue3, loopBodyBB, loopEndBB);
-
+    // escaped = !escaped && byte == 255
     builder.SetInsertPoint(loopBodyBB);
-
     llvm::Value* nextStrIdxVal = builder.CreateAdd(strIdxVal, builder.getInt64(1), fmt::format("{}.nextStrIdxVal", llvmName));
     builder.CreateStore(nextStrIdxVal, strIdxArg);
-    builder.CreateStore(currentByteVal, prevBytePtr);
+    llvm::Value* notEscaped = builder.CreateICmpEQ(escapedVal, builder.getInt8(0), fmt::format("{}.notEscaped", llvmName));
+    llvm::Value* isEscapeByte = builder.CreateICmpEQ(currentByteVal, builder.getInt8(255), fmt::format("{}.isEscapeByte", llvmName));
+    llvm::Value* nextEscaped = builder.CreateAnd(notEscaped, isEscapeByte, fmt::format("{}.nextEscaped", llvmName));
+    builder.CreateStore(builder.CreateZExt(nextEscaped, i8Ty), prevBytePtr);
     builder.CreateBr(loopCond1BB);
 
     builder.SetInsertPoint(loopEndBB);
